@@ -46,6 +46,11 @@ uint8_t col_pins[3] = {BUTTON_PIN3, BUTTON_PIN1, BUTTON_PIN5};
 
 char keypad_array[4][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 0, 11}};
 static const char *message_array[4][3] = {{"SOS", "GOING UP", "GOING DOWN"}, {"LOW OXYGEN", "CHECK-IN", "COME LOOK"}, {"no msg", "no msg", "no msg"}, {"no msg", "no msg", "no msg"}};
+const unsigned int *audio_messages_array[4][3] = {
+  {AudioSampleSos, AudioSampleGoing_up, AudioSampleGoing_down},
+  {AudioSampleLow_oxygen, AudioSampleCheck_in, AudioSampleCome_look},
+  {AudioSampleNo_msg, AudioSampleNo_msg, AudioSampleNo_msg}
+};
 
 enum OperatingMode { 
     RECEIVE,
@@ -141,7 +146,7 @@ void loop() {
                 // transmitMessagePointer++; //increment ptr by one 
 
                 // confirmation of message pressed back to bone conduction
-                // playMem.play(audio_messages_array[r][c]); // plays message pressed
+                playMem.play(audio_messages_array[r][c]); // plays message pressed
 
                 strip.fill(magenta, 0, keypad_array[r][c]);
                 strip.show();
@@ -194,7 +199,8 @@ void transmit() {
     // msg.id = 3; // arbitrary diver ID 
     // encode(msg, &outputData);  // outputData now has message inside of it
     // play_data(outputData); //play that message 
-    delay(500);
+    // delay(500);
+    /* ADD SOMETHING WHERE THE DIVERS CAN BE ASSIGNED THEIR UNIQUE SENDING OFFSET */
     mode = RECEIVE; // switch back to receiving mode 
     // transmitMessagePointer--; // decrement pointer by 1 to get next newest message in queue 
 
