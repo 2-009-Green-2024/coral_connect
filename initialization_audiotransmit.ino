@@ -1,4 +1,4 @@
-// initialization sketch
+// initialization sketch + button functionality
 
 // Import default libraries
 #include <Arduino.h>
@@ -18,31 +18,38 @@
 #include <Adafruit_NeoPixel.h> // LEDs
 
 // Import audio samples
-// #include "AudioSampleLow_o2.h"
-// #include "AudioSampleSos.h"
-// #include "AudioSampleGoing_up.h"
-// #include "AudioSampleGoing_down.h"
-// #include "AudioSampleLow_oxygen.h"
-// #include "AudioSampleCheck_in.h"
-// #include "AudioSampleCome_look.h"
-#include "AudioSampleNo_msg.h"
+// NEED TO COMPRESS THESE FILES
+#include "AudioAir.h"
+#include "AudioCheck_in.h"
+#include "AudioFish.h"
+#include "AudioLook.h"
+#include "AudioAscend.h"
+#include "AudioSos.h"
+
+uint8_t user_ID = 1;
 
 /************ MESSAGE PACKETS */
 union UnderwaterMessage {
     struct {
-        uint8_t msg; // 8 bits for message
-        uint8_t id;  // 8 bits for id
+        uint8_t msg : 3; // 8 bits for message
+        uint8_t id : 4;  // 8 bits for id
     };
-    uint16_t data; // 16 bits total (concatenation of msg and id)
+    uint8_t data; // 16 bits total (concatenation of msg and id)
 
-    // // // Constructor for easy initialization
-    // UnderwaterMessage(uint8_t m, uint8_t i) : msg(m), id(i) {}
+    static constexpr uint8_t size = 7;
 };
+
+UnderwaterMessage createUnderwaterMessage(uint8_t m, uint8_t i) {
+    UnderwaterMessage message;
+    message.msg = m & 0x7;  // Mask to 3 bits
+    message.id = i & 0xF;   // Mask to 4 bits
+    return message;
+}
 
 /************ MESSAGE QUEUEING */
 //LIFO queue - last in first out
 #define MESSAGE_QUEUE_LEN 10
-// UnderwaterMessage transmitMessageQueue[MESSAGE_QUEUE_LEN];
+UnderwaterMessage transmitMessageQueue[MESSAGE_QUEUE_LEN];
 uint8_t transmitMessagePointer = 0;
 
 // UnderwaterMessage receiveMessageQueue[MESSAGE_QUEUE_LEN];
@@ -71,38 +78,21 @@ uint32_t bluishwhite = strip.Color(64, 0, 0, 64);
 Adafruit_MCP23X17 mcp;
 Adafruit_LC709203F lc;
 
-uint8_t row_pins[4] = {BUTTON_PIN2, BUTTON_PIN7, BUTTON_PIN6, BUTTON_PIN4};
-uint8_t col_pins[3] = {BUTTON_PIN3, BUTTON_PIN1, BUTTON_PIN5};
+uint8_t buttons[6] = {BUTTON_PIN1, BUTTON_PIN2, BUTTON_PIN3, BUTTON_PIN4, BUTTON_PIN5, BUTTON_PIN6};
 
-char keypad_array[4][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 0, 11}};
-static const char *message_array[4][3] = {{"SOS", "GOING UP", "GOING DOWN"}, {"LOW OXYGEN", "CHECK-IN", "COME LOOK"}, {"no msg", "no msg", "no msg"}, {"no msg", "no msg", "no msg"}};
+static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
 
-// const unsigned int *audio_messages_array[4][3] = {
-//   {AudioSampleSos, AudioSampleGoing_up, AudioSampleGoing_down},
-//   {AudioSampleLow_oxygen, AudioSampleCheck_in, AudioSampleCome_look},
-//   {AudioSampleNo_msg, AudioSampleNo_msg, AudioSampleNo_msg}
-// };
+const unsigned int *audio_messages_array[6] = {AudioAir, AudioAscend, AudioFish, AudioLook, AudioCheckin, AudioSos};
+// const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
 
-const unsigned int *audio_messages_array[4][3] = {
-  {AudioSampleNo_msg, AudioSampleNo_msg, AudioSampleNo_msg},
-  {AudioSampleNo_msg, AudioSampleNo_msg, AudioSampleNo_msg},
-  {AudioSampleNo_msg, AudioSampleNo_msg, AudioSampleNo_msg}
-};
+UnderwaterMessage air_UM = {1, user_ID};
+UnderwaterMessage ascend_UM = {2, user_ID};
+UnderwaterMessage fish_UM = {3, user_ID};
+UnderwaterMessage look_UM = {4, user_ID};
+UnderwaterMessage checkin_UM = {5, user_ID};
+UnderwaterMessage sos_UM = {6, user_ID};
 
-
-UnderwaterMessage low_oxygen = {0x01, 0x01}; // msg = 0x01, id = 0x01
-UnderwaterMessage sos = {0x02, 0x02};        // msg = 0x02, id = 0x02
-UnderwaterMessage going_up = {0x04, 0x03};   // msg = 0x04, id = 0x03
-UnderwaterMessage going_down = {0x08, 0x04}; // msg = 0x08, id = 0x04
-UnderwaterMessage check_in = {0x10, 0x05};   // msg = 0x10, id = 0x05
-UnderwaterMessage come_look = {0x20, 0x06};  // msg = 0x20, id = 0x06
-UnderwaterMessage no_msg = {0x40, 0x07};     // msg = 0x40, id = 0x07
-
-union UnderwaterMessage messages_bits_array[4][3] = {
-  {sos, going_up, going_down},
-  {low_oxygen, check_in, come_look},
-  {no_msg, no_msg, no_msg} 
-};
+union UnderwaterMessage UM_array[6] = {air_UM, ascend_UM, fish_UM, look_UM, checkin_UM, sos_UM};
 
 // amplifier set ups
 
@@ -200,17 +190,7 @@ void setup() {
         Serial.println("Error: I2C connection with IO expander.");
         // initialization error
     }
-    initializationError(2);
-
-    // Get buttons (keypad right now) up and running    
-    for (int r = 0; r < 4; r++) {
-        mcp.pinMode(row_pins[r], OUTPUT);
-        mcp.digitalWrite(row_pins[r], HIGH);
-        }
-    for (int c = 0; c < 3; c++) {
-        mcp.pinMode(col_pins[c], INPUT_PULLUP);
-        }
-    // Serial.println("Begin loop to check what buttons are pressed.");
+    initializationPass(2);
 
     // Get battery monitor up and running
     Wire.setClock(100000);
@@ -220,7 +200,7 @@ void setup() {
     audioShield.inputSelect(micInput);
     audioShield.micGain(60);    //0-63
     audioShield.volume(1);    //0-1
-    initializationError(4);
+    initializationPass(4);
 
     queue.begin(); 
     // setI2SFreq(sampleRate);
@@ -245,21 +225,24 @@ void setup() {
     sine.amplitude(0.2f);
     noise.amplitude(0.2f);
 
-    //Battery check setup
-    if (!lc.begin()) {
-    Serial.println(F("Couldnt find Adafruit LC709203F?\nMake sure a battery is plugged in!"));
-    while (1) delay(10);
-    }
-    Serial.println(F("Found LC709203F"));
-    Serial.print("Version: 0x"); Serial.println(lc.getICversion(), HEX);
+    // NOT WORKING!!!
 
-    // lc.setThermistorB(3950);
-    // Serial.print("Thermistor B = "); Serial.println(lc.getThermistorB());
+    // //Battery check setup
+    // if (!lc.begin()) {
+    // Serial.println(F("Couldnt find Adafruit LC709203F?\nMake sure a battery is plugged in!"));
+    // while (1) delay(10);
+    // }
+    // Serial.println(F("Found LC709203F"));
+    // Serial.print("Version: 0x"); 
+    // Serial.println(lc.getICversion(), HEX);
 
-    lc.setPackSize(LC709203F_APA_500MAH);
-    lc.setAlarmVoltage(3.8);
+    // // lc.setThermistorB(3950);
+    // // Serial.print("Thermistor B = "); Serial.println(lc.getThermistorB());
 
-    initializationError(6);
+    // lc.setPackSize(LC709203F_APA_500MAH);
+    // lc.setAlarmVoltage(3.8);
+
+    // initializationPass(6);
 
     // mode = RECEIVE; // set it to receiving mode
 
@@ -274,49 +257,39 @@ void setup() {
 void loop() {
   strip.clear(); // Set all pixel colors to 'off'
 
-  for (int r = 0; r < 4; r++) {
-      mcp.digitalWrite(row_pins[r], LOW);
-      delay(5);
-      for (int c = 0; c < 3; c++) {
-          if (mcp.digitalRead(col_pins[c]) == LOW) {
-              mode = TRANSMIT;
-              Serial.println(keypad_array[r][c]); // returns button pressed
-              Serial.println(message_array[r][c]); // returns message pressed
+  for (int b = 0; b < 6; b++) {
+    if (mcp.digitalRead(buttons[b]) == LOW) {
+        // serial monitor
+        Serial.println(b+1);
+        Serial.println(message_array[b]);
 
-              // transmitMessageQueue[transmitMessagePointer] = message_array[r][c];// add msg to queue  
-              transmitMessagePointer++; //increment ptr by one 
+        // bone conduction
+        // playMem.play("YOU SENT" AUDIO FILE);
+        playMem.play(audio_messages_array[b]); 
 
-              // confirmation of message pressed back to bone conduction
-              playMem.play(audio_messages_array[r][c]); // plays message pressed
-              // Serial.println(messages_bits_array[r][c]); // returns UnderwaterMessage bits signal pressed
+        // hydrophone transmit
+        transmitMessageQueue[transmitMessagePointer] = UM_array[b]; // add msg to queue  
+        transmitMessagePointer++; // increment ptr by one 
 
-              Serial.print("Message ID: ");
-              Serial.print(messages_bits_array[r][c].id, HEX); // prints the `id` in hexadecimal
-              Serial.print(" | Message Code: ");
-              Serial.println(messages_bits_array[r][c].msg, HEX); // prints the `msg` in hexadecimal
-
-              strip.fill(red, 0, keypad_array[r][c]);
-              strip.show();
-          }
-      }
-      mcp.digitalWrite(row_pins[r], HIGH);
-      delay(5);
-      }
-
+        strip.fill(red, 0, b+1);
+        strip.show();
+        delay(1000);
+        strip.clear();
+    }
+  }
 }
 
 // TODO otti moment
-void initializationError(int error) {
+void initializationPass(int error) {
     // passed in int error represents number of LEDs in strip that we want to light up
     // for initialization, using greenishwhite (whereas showing life is bluishwhite)
     
     strip.fill(greenishwhite, 0, error); // error = number of tiles lit up
     strip.show();
-    delay(3000);
-    // while(1);
+    delay(2000);
     strip.clear();
 }
 
-// IO expander = initializationError(2)
-// audio shield = initializationError(4)
-// LC battery monitor = initializationError(6)
+// IO expander = initializationPass(2)
+// audio shield = initializationPass(4)
+// LC battery monitor = initializationPass(6)
