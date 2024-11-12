@@ -39,19 +39,11 @@ union UnderwaterMessage {
     static constexpr uint8_t size = 7;
 };
 
-UnderwaterMessage createUnderwaterMessage(uint8_t m, uint8_t i) {
-    UnderwaterMessage message;
-    message.msg = m & 0x7;  // Mask to 3 bits
-    message.id = i & 0xF;   // Mask to 4 bits
-    return message;
-}
-
 /************ MESSAGE QUEUEING */
 //LIFO queue - last in first out
 #define MESSAGE_QUEUE_LEN 10
 UnderwaterMessage transmitMessageQueue[MESSAGE_QUEUE_LEN];
 uint8_t transmitMessagePointer = 0;
-
 // UnderwaterMessage receiveMessageQueue[MESSAGE_QUEUE_LEN];
 uint8_t receiveMessagePointer = 0;
 
@@ -62,7 +54,6 @@ uint8_t receiveMessagePointer = 0;
 #define BUTTON_PIN4 3
 #define BUTTON_PIN5 4
 #define BUTTON_PIN6 5
-#define BUTTON_PIN7 6
 
 // Pin connected to neopixels strip
 #define LED_PIN  14
@@ -129,11 +120,9 @@ AudioAnalyzeRMS           rms_R;
 
 int current_waveform=0;
 AudioConnection bc_transducer(playMem, 0, audioOutput, 0); // thru hydro - 1, thru bone conduction - 0 for audioOut
-// AudioConnection patchCord1(waveform1, 0, audioOutput, 1);
 AudioConnection hydro_listener(audioInput, 0, findTone, 0); //for output: hydro - 0, bone conduction - 1    
 AudioConnection hydro_listener1(audioInput, queue); 
-// AudioConnection patchCord1(audioInput, 0, rms_L, 0); //for output: hydro - 0, bone conduction - 1    
-// AudioConnection patchCord(audioInput, 0, rms_R, 1); //for output: hydro - 0, bone conduction - 1    
+
 int dOUT;
 int16_t* destination; 
 // pinMode(dOUT, OUTPUT);
@@ -141,8 +130,6 @@ int16_t* destination;
 // setup for testing a whole octave of sine waves
 float32_t octaveF10[13] = {22350.6, 23679.6, 25087.7, 26579.5, 28160.0, 29834.5, 31608.5, 33488.1, 35479.4, 37589.1, 39824.3, 42192.3};
 // note names                  F 10,   F# 10,    G 10,   G# 10,    A 10,   A# 10,    B 10,    C 11,   C# 11,    D 11,   D# 11,    E 11
-// AudioSynthWaveformSine sineBank[12];
-// AudioMixer4 sineMixers[4];
 
 void printPerformanceData();
 
@@ -152,7 +139,6 @@ enum OperatingMode {
     ERROR
 };
 enum OperatingMode mode;
-
 
 void setup() {
   
@@ -209,18 +195,6 @@ void setup() {
     // fft.setHighPassCutoff(20000.f);
     pinMode(17, OUTPUT); //set relay pin as output
 
-    // Confirgure both to use "myWaveform" for WAVEFORM_ARBITRARY
-    // waveform1.arbitraryWaveform(myWaveform, 172.0);
-    // waveform2.arbitraryWaveform(myWaveform, 172.0);
-
-    // waveform1.frequency(440);
-    // // waveform2.frequency(440);
-    // waveform1.amplitude(1.0);
-    // // waveform2.amplitude(1.0);
-
-    // current_waveform = WAVEFORM_SQUARE;
-    // waveform1.begin(current_waveform);
-
     sine.frequency(440.f * (AUDIO_SAMPLE_RATE_EXACT / sampleRate));
     sine.amplitude(0.2f);
     noise.amplitude(0.2f);
@@ -244,13 +218,11 @@ void setup() {
 
     // initializationPass(6);
 
-    // mode = RECEIVE; // set it to receiving mode
+    mode = RECEIVE; // set it to receiving mode
 
     Serial.println("Done initializing! Starting now!");
     strip.fill(bluishwhite, 0, 8); // light up entire strip, all set up!
     strip.show();
-    // tone(14, 5000);
-    // playMem.play(AudioSampleLow_o2);
 
 }
 
@@ -271,13 +243,18 @@ void loop() {
         transmitMessageQueue[transmitMessagePointer] = UM_array[b]; // add msg to queue  
         transmitMessagePointer++; // increment ptr by one 
 
+        mode = TRANSMIT;
+        update_relays(mode);
+        transmit(); // right now only changes mode back to receive
+
         strip.fill(red, 0, b+1);
         strip.show();
         delay(1000);
         strip.clear();
+        }
     }
-  }
-}
+    update_relays(mode);
+    }
 
 // TODO otti moment
 void initializationPass(int error) {
@@ -288,6 +265,29 @@ void initializationPass(int error) {
     strip.show();
     delay(2000);
     strip.clear();
+}
+
+void update_relays(OperatingMode newMode) {
+    if (newMode == RECEIVE); {
+        digitalWrite(17, LOW); // make relays go to listen mode
+    }
+    if (newMode == TRANSMIT); {
+        digitalWrite(17, HIGH); // make relays go into transmit mode
+    }
+}
+
+void transmit() {
+    /* Plays a single message through the hydrophone, then switches back to receiving mode */
+    // int[32] outputData; // init 32 bit array of ints
+    // UnderwaterMessage msg = transmitMessageQueue[transmitMessagePointer]; // message is current item in the queue
+    // msg.id = 3; // arbitrary diver ID 
+    // encode(msg, &outputData);  // outputData now has message inside of it
+    // play_data(outputData); //play that message 
+    // delay(500);
+    /* ADD SOMETHING WHERE THE DIVERS CAN BE ASSIGNED THEIR UNIQUE SENDING OFFSET */
+    mode = RECEIVE; // switch back to receiving mode 
+    // transmitMessagePointer--; // decrement pointer by 1 to get next newest message in queue 
+
 }
 
 // IO expander = initializationPass(2)
