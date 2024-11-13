@@ -75,14 +75,14 @@ void setup() {
   audioShield.inputSelect(myInput);
   audioShield.micGain(90);
   audioShield.volume(1);
-  Serial.println(“Setup done; adding message to queue”);
+  Serial.println("Setup done; adding message to queue");
   // Populate message
   // Message MSG = 2, ID = 1
   testMessage1 = createUnderwaterMessage(2, 1);
   // testMessage2 = createUnderwaterMessage(2, 4);
   transmitMessageAsync(testMessage1);
   // transmitMessageAsync(testMessage2);
-  Serial.print(“Message1 in binary: “);
+  Serial.print("Message1 in binary: ");
   for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
       // Shift and mask to get each bit
       Serial.print((testMessage1.data >> i) & 1);
@@ -101,17 +101,16 @@ void loop() {
     //Requeue message
     transmitMessageAsync(testMessage1);
     // transmitMessageAsync(testMessage2);
-    Serial.println(“Requeueing message; txbuf empty”);
+    Serial.println("Requeueing message; txbuf empty");
   }
   //Deal with tone sending (asynchronous tone)
   if (toneStackPos > 0) {
     if (millis() - lastToneStart > toneDelayQueue[0]) {
-      // Serial.print(“ToneQueue: “);
+      // Serial.print("ToneQueue: ");
       for (int i=1; i<toneBufferLength; i++) { //Left shift all results by 1
         // Serial.print(toneFreqQueue[i]);
-        // Serial.print(“Hz@“);
+        // Serial.print("Hz@");
         // Serial.print(toneDelayQueue[i]);
-        // Serial.print(” “);
         toneFreqQueue[i-1] = toneFreqQueue[i];
         toneDelayQueue[i-1] = toneDelayQueue[i];
       }
@@ -140,7 +139,7 @@ void loop() {
       }
     }
     // Serial.print((double)binNumber*(double)43.0);
-    // Serial.print(“Hz@“);
+    // Serial.print("Hz@");
     // Serial.println(maxBinAmp);
     if (sampling) {
       if (validAmplitude(maxBinAmp)) {
@@ -149,9 +148,9 @@ void loop() {
         if (samplingPointer >= NUM_SAMPLES) { // Wrap around end of buffer
           samplingPointer = 0;
         }
-        // Serial.print(“FFT: “);
+        // Serial.print("FFT: ");
         // Serial.print(binNumber);
-        // Serial.print(” sampBufDepth: “);
+        // Serial.print(" sampBufDepth: ");
         // Serial.println(samplingPointer);
       }
     }
@@ -162,7 +161,7 @@ void loop() {
       }
     } else if (curState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
       if (isSampleBufferValid() && freqMatchesBounds(sampleBufferMax(), BOUNDS_FREQ, MESSAGE_START_FREQ)) {
-        Serial.println(“SAW VALID MESSAGE START FREQ!“);
+        Serial.println("SAW VALID MESSAGE START FREQ!");
         transitionState(MESSAGE_ACTIVE); //Currently receiving valid message
       } else { // If buffer is not valid OR freq doesn’t match start
         transitionState(LISTENING);
@@ -172,10 +171,10 @@ void loop() {
         // Check if 1 or 0 (or neither)
         double bufferAvgFreq = sampleBufferMax();
         if (freqMatchesBounds(bufferAvgFreq, BOUNDS_FREQ, MESSAGE_1_FREQ)) {
-          // Serial.println(“GOT 1”);
+          // Serial.println("GOT 1");
           bitBuffer[bitPointer] = 1; // WE GOT A 1
         } else if (freqMatchesBounds(bufferAvgFreq, BOUNDS_FREQ, MESSAGE_0_FREQ)) {
-          // Serial.println(“GOT 0");
+          // Serial.println("GOT 0");
           bitBuffer[bitPointer] = 0;
         }
       }
@@ -191,9 +190,9 @@ void loop() {
         // Assign the data to an UnderwaterMessage
         UnderwaterMessage message;
         message.data = data;
-        Serial.print(“Got message!!! MSG = “);
+        Serial.print("Got message!!! MSG = ");
         Serial.print(message.msg);
-        Serial.print(“, ID = “);
+        Serial.print(", ID = ");
         Serial.println(message.id);
         transitionState(LISTENING); // Return to listening state
       }
@@ -284,7 +283,7 @@ bool freqMatchesBounds(double freq, double bounds, double target) {
 }
 // Transition state function
 void transitionState(RECV_STATE newState) {
-  // Serial.print(“TRANSITIONSTATE: “);
+  // Serial.print("TRANSITIONSTATE: ");
   // Serial.println(newState);
   if (newState == CHECK_START || newState == MESSAGE_ACTIVE) {
     clearSampleBuffer();
