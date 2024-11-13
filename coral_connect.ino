@@ -158,7 +158,7 @@ void setup() {
     */
 
     // // Initialize SD card
-    SD.begin(BUILTIN_SDCARD);
+    
     // if (!SD.begin(chipSelect)) {
     //   Serial.println("SD card initialization failed!");
     //   return;
@@ -191,9 +191,6 @@ void setup() {
     if (!mcp.begin_I2C()) {
         Serial.println("Error: I2C connection with IO expander.");
         initializationError(2);
-    }
-    for (int i=0; i<6; i++) {
-      mcp.pinMode(i, INPUT_PULLUP);
     }
     initializationPass(2);
     
@@ -284,7 +281,7 @@ void loop() {
         binNumber = i;
       }
     }
-    // Serial.print((double)binNumber*(double)43.0664);
+    // Serial.print((double)binNumber*(double)43.0);
     // Serial.print("Hz@");
     // Serial.println(maxBinAmp);
     if (sampling) { // Valid start freq was received, message is actively being received 
@@ -303,7 +300,7 @@ void loop() {
 
     // We get valid message start tone!
     if (curReceivingState == LISTENING) {
-      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0664, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
         transitionReceivingState(CHECK_START); // Check start is actively checking if we've gotten start frequencies before recording the message 
       }
     } else if (curReceivingState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
@@ -344,13 +341,13 @@ void loop() {
 
         if (validUnderwaterMessage(recvdMessage)) {
           // Play audio corresponding to usert
-          playBoneconduct.play(audio_ids_array[recvdMessage.id]);
+          playBoneconduct.play(audio_ids_array[message.id]);
           
           Serial.print(" --- USER: ");
-          Serial.print(user_ids_array[recvdMessage.id]);
+          Serial.print(user_ids_array[message.id]);
 
           for (int c = 0; c < 6; c++) {
-            if (recvdMessage.msg == UM_array[c].msg) {
+            if (message.msg == UM_array[c].msg) {
                 Serial.print(" --- MESSAGE:");
                 Serial.println(message_array[c]);
                 playBoneconduct.play(audio_messages_array[c]);
@@ -402,11 +399,10 @@ void initializationError(int error) {
     strip.show();
     delay(2000);
     strip.clear();
-    while(true);
 }
 
 void transitionOperatingMode(OPERATING_MODE newMode) {
-    if (newMode == RECEIVE) {
+    if (newMode == RECEIVE); {
         digitalWrite(RELAY_PIN, LOW); // make relays go to listen mode
     } else if (newMode == TRANSMIT) {
         digitalWrite(RELAY_PIN, HIGH); // make relays go into transmit mode
@@ -496,7 +492,8 @@ double sampleBufferMax() {
   for (uint16_t i = 0; i < NUM_SAMPLES; i++) {
     binNumber = samplingBuffer[i];
     if (binNumber < 1024) { // Ensure binNumber is within the valid range
-      frequency_hist[binNumber]++;
+      frequency_hist[binNumber]++
+  transitionOperatingMode(TRANSMIT); // Switch relays to transmit mode;
     }
   }
   int max_bin_count = 0;
@@ -509,7 +506,7 @@ double sampleBufferMax() {
     }
   }
   // Return frequency in Hz based on bin number
-  return (double)binNumber * 43.0664; // Adjust factor if needed for your sample rate/FFT size
+  return (double)binNumber * 43.0; // Adjust factor if needed for your sample rate/FFT size
 }
 
 // Function to transmit the UnderwaterMessage asynchronously
