@@ -402,9 +402,15 @@ void loop() {
     for (int b = 0; b < 6; b++) {
         if (mcp.digitalRead(buttons[b]) == LOW) {
 
+            strip.clear();
+            
             // MESSAGE SERIAL PRINT
             Serial.println(b+1);
             Serial.println(message_array[b]);
+
+             // LED CONFIRMATION
+            strip.fill(red, 0, b+1);
+            strip.show();
 
             // BONE CONDUCTION CONFIRMATION
             // playMem.play("YOU SENT" AUDIO FILE);
@@ -455,10 +461,10 @@ void loop() {
             // transmit(); // right now only changes mode back to receive
 
             // LED CONFIRMATION
-            strip.fill(red, 0, b+1);
-            strip.show();
-            delay(1000);
-            strip.clear();
+            // strip.fill(red, 0, b+1);
+            // strip.show();
+            // delay(1000);
+            // strip.clear();
 
             // BACK TO RECEIVING MODE
             mode = RECEIVE;
