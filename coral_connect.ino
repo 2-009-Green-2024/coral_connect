@@ -15,15 +15,16 @@
 #include <Adafruit_LC709203F.h> // Battery monitor
 #include <Adafruit_MCP23X17.h> // IO expander
 #include <Adafruit_NeoPixel.h> // LEDs
+#include <Adafruit_TPA2016.h> // BC transducer amp
 #include "pindefs.h" // Pin definitions
 
 // Import audio samples
 // TODO: NEED TO COMPRESS THESE FILES
-// #include "AudioAir.h"
+#include "AudioAir.h"
 // #include "AudioCheck_in.h"
-#include "AudioFish.h"
+// #include "AudioFish.h"
 #include "AudioLook.h"
-// #include "AudioAscend.h"
+//#include "AudioAscend.h"
 // #include "AudioSos.h"
 
 // audio shield SD card
@@ -56,6 +57,7 @@ uint32_t bluishwhite = strip.Color(64, 0, 0, 64);
 
 Adafruit_MCP23X17 mcp;
 Adafruit_LC709203F lc;
+Adafruit_TPA2016 audioamp = Adafruit_TPA2016();
 
 uint8_t buttons[6] = {BUTTON_PIN1, BUTTON_PIN2, BUTTON_PIN3, BUTTON_PIN4, BUTTON_PIN5, BUTTON_PIN6};
 // Underwater message array of messages to be sent upon each button press
@@ -65,16 +67,19 @@ UnderwaterMessage UM_array[6];
 // Pointers to user ID as string, and audio ID files
 // TODO NEED TO RECORD AND PUT IN USER ID AUDIO FILES
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
-const unsigned int *audio_ids_array[16] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
+// const unsigned int *audio_ids_array[16] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
+const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
 
 // Message array, pointers to each message and all audio messages
 static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
 // const unsigned int *audio_messages_array[6] = {AudioAir, AudioAscend, AudioFish, AudioLook, AudioCheckin, AudioSos};
-const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
+const unsigned int *audio_messages_array[6] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
+// const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioAir, AudioLook, AudioFish, AudioLook};
 
 
 /************* AUDIO SHIELD / PIPELINE SETUP */
 const int micInput = AUDIO_INPUT_MIC;
+// const int chipSelect = 10; 
 
 // SELECT SAMPLE RATE
 const uint32_t sampleRate = 44100;
@@ -228,6 +233,9 @@ void setup() {
     Serial.printf("SGTL running at samplerate: %d\n", sampleRate);
     initializationPass(4);
     
+    // Get BC transducer amp up and running 
+    audioamp.begin();
+    audioamp.setGain(30);
     // Setup receiver state machine, and transition states
     transitionReceivingState(LISTENING);
     transitionOperatingMode(RECEIVE);
@@ -240,6 +248,10 @@ void setup() {
 }
 
 void loop() {
+  // toneStackPos = 0;
+  // Serial.println("TONE STACK POSITION:");
+  // Serial.println(toneStackPos);
+
   if (toneStackPos == 0) {
     strip.clear(); // Set all pixel colors to 'off' if queue is empty
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
@@ -281,7 +293,7 @@ void loop() {
         binNumber = i;
       }
     }
-    // Serial.print((double)binNumber*(double)43.0);
+    // Serial.print((double)binNumber*(double)43.0664);
     // Serial.print("Hz@");
     // Serial.println(maxBinAmp);
     if (sampling) { // Valid start freq was received, message is actively being received 
@@ -297,10 +309,10 @@ void loop() {
         // Serial.println(samplingPointer);
       }
     }
-
+    
     // We get valid message start tone!
     if (curReceivingState == LISTENING) {
-      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0664, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
         transitionReceivingState(CHECK_START); // Check start is actively checking if we've gotten start frequencies before recording the message 
       }
     } else if (curReceivingState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
@@ -341,13 +353,13 @@ void loop() {
 
         if (validUnderwaterMessage(recvdMessage)) {
           // Play audio corresponding to usert
-          playBoneconduct.play(audio_ids_array[message.id]);
+          playBoneconduct.play(audio_ids_array[recvdMessage.id]);
           
           Serial.print(" --- USER: ");
-          Serial.print(user_ids_array[message.id]);
+          Serial.print(user_ids_array[recvdMessage.id]);
 
           for (int c = 0; c < 6; c++) {
-            if (message.msg == UM_array[c].msg) {
+            if (recvdMessage.msg == UM_array[c].msg) {
                 Serial.print(" --- MESSAGE:");
                 Serial.println(message_array[c]);
                 playBoneconduct.play(audio_messages_array[c]);
@@ -361,30 +373,31 @@ void loop() {
   }
 
   // BUTTONS AND TRANSMITTING
-  for (int b = 0; b < 6; b++) {
-    if (mcp.digitalRead(buttons[b]) == LOW) {
-      strip.clear();
+  // for (int b = 0; b < 6; b++) {
+  //   // Serial.print(mcp.digitalRead(buttons[b]));
+  //   if (mcp.digitalRead(buttons[b]) == HIGH) { // TODO: FIX THIS FROM ALWAYS BEING READ AS LOW, THIS IS A TEMPORARY WORKAROUND. BUTTONS 2, 4, AND 5 WORK BUT THE OTHERS ARE INCONSISTENT
+  //     strip.clear();
 
-      // BONE CONDUCTION CONFIRMATION
-      // playBoneconduct.play("YOU SENT" AUDIO FILE);
-      playBoneconduct.play(audio_messages_array[b]); 
+  //     // BONE CONDUCTION CONFIRMATION
+  //     // playBoneconduct.play("YOU SENT" AUDIO FILE);
+  //     playBoneconduct.play(audio_messages_array[b]); 
 
-      transmitMessageAsync(UM_array[b]); // Add to queue!
+  //     transmitMessageAsync(UM_array[b]); // Add to queue!
 
-      Serial.println("Queued message! message in binary: ");
-      for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
-          // Shift and mask to get each bit
-          Serial.print((UM_array[b].data >> i) & 1);
-      }
-      Serial.println(); // New line after printing bits
+  //     // Serial.println("Queued message! message in binary: ");
+  //     for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
+  //         // Shift and mask to get each bit
+  //         Serial.print((UM_array[b].data >> i) & 1);
+  //     }
+  //     Serial.println(); // New line after printing bits
 
-      // LED CONFIRMATION
-      strip.fill(red, 0, b+1);
-      strip.show();
-      delay(100); // TODO fix with nicer debouncing
-      strip.clear();
-    }
-  }
+  //     // LED CONFIRMATION
+  //     strip.fill(red, 0, b+1);
+  //     strip.show();
+  //     delay(100); // TODO fix with nicer debouncing
+  //     strip.clear();
+  //   }
+  // }
 }
 
 void initializationPass(int check) {
@@ -402,7 +415,7 @@ void initializationError(int error) {
 }
 
 void transitionOperatingMode(OPERATING_MODE newMode) {
-    if (newMode == RECEIVE); {
+    if (newMode == RECEIVE) {
         digitalWrite(RELAY_PIN, LOW); // make relays go to listen mode
     } else if (newMode == TRANSMIT) {
         digitalWrite(RELAY_PIN, HIGH); // make relays go into transmit mode
@@ -492,8 +505,8 @@ double sampleBufferMax() {
   for (uint16_t i = 0; i < NUM_SAMPLES; i++) {
     binNumber = samplingBuffer[i];
     if (binNumber < 1024) { // Ensure binNumber is within the valid range
-      frequency_hist[binNumber]++
-  transitionOperatingMode(TRANSMIT); // Switch relays to transmit mode;
+      frequency_hist[binNumber]++;
+      transitionOperatingMode(TRANSMIT); // Switch relays to transmit mode;
     }
   }
   int max_bin_count = 0;
@@ -506,7 +519,7 @@ double sampleBufferMax() {
     }
   }
   // Return frequency in Hz based on bin number
-  return (double)binNumber * 43.0; // Adjust factor if needed for your sample rate/FFT size
+  return (double)binNumber * 43.0664; // Adjust factor if needed for your sample rate/FFT size
 }
 
 // Function to transmit the UnderwaterMessage asynchronously
