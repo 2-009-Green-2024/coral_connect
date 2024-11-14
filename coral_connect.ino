@@ -52,7 +52,7 @@ union UnderwaterMessage {
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGBW + NEO_KHZ800);
 // GRB color order
 uint32_t red = strip.Color(0, 64, 0, 0);
-uint32_t greenishwhite = strip.Color(64, 0, 0, 64); // r g b w
+uint32_t greenishwhite = strip.Color(64, 0, 0, 64); // g r b w
 uint32_t bluishwhite = strip.Color(0, 0, 64, 64);
 
 Adafruit_MCP23X17 mcp;
@@ -66,9 +66,14 @@ UnderwaterMessage UM_array[6];
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
 // TODO NEED TO RECORD AND PUT IN USER ID AUDIO FILES
+
+int user_id_current = 1;
+
+static const char *audio_ids_array[16] = {"ONE.wav", "TWO.wav", "THREE.wav", "FOUR.wav", "FIVE.wav", "SIX.wav", "SEVEN.wav", "EIGHT.wav", "NINE.wav", "TEN.wav", "ELEVEN.wav", "TWELVE.wav", "THIRTEEN.wav", "FOURTEEN.wav", "FIFTEEN.wav", "SIXTEEN.wav"};
+
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
-// const unsigned int *audio_ids_array[16] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
-const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
+
+// const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
 
 // Message array, pointers to each message and all audio messages
 static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
@@ -109,16 +114,16 @@ AudioConnection          patchCord4(inputAmp, 0, inputFFT, 0);
 Each bin is numbered 0-1023 and has a float with its amplitude
 SamplingBuffer is a time-valued array that records bin number
 */
-#define MESSAGE_BIT_DELAY 250 // ms between bits
+#define MESSAGE_BIT_DELAY 150 // ms between bits
 #define NUM_SAMPLES ((int)(((MESSAGE_BIT_DELAY / 10.0) * (86.0 / 100.0)) + 1.0 + 0.9999))
 int16_t samplingBuffer[NUM_SAMPLES]; // BIN indices
 uint16_t samplingPointer = 0; //How many samples have we seen?
 #define MESSAGE_LENGTH UnderwaterMessage::size
 bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
-#define MESSAGE_START_FREQ 10000 // Hz (1/sec)
-#define MESSAGE_0_FREQ 5000 // Hz
-#define MESSAGE_1_FREQ 7500 // Hz
+#define MESSAGE_START_FREQ 20000 // Hz (1/sec)
+#define MESSAGE_0_FREQ 15000 // Hz
+#define MESSAGE_1_FREQ 10000 // Hz
 #define MIN_VALID_AMP 0.4
 #define MAX_VALID_AMP 1.5
 #define BOUNDS_FREQ 1500
@@ -387,11 +392,14 @@ void loop() {
 
         if (validUnderwaterMessage(recvdMessage)) {
           // Play audio corresponding to usert
-          // playBoneconduct.play(audio_ids_array[recvdMessage.id]); TODO switch to relevant filenames/diver IDs
-          // playBoneconduct.play("AIR.wav"); 
-          
           Serial.print(" --- USER: ");
           Serial.print(user_ids_array[recvdMessage.id]);
+          playBoneconduct.play("USER.wav");
+          while (playBoneconduct.isPlaying());
+          playBoneconduct.play(audio_ids_array[recvdMessage.id]);
+          while (playBoneconduct.isPlaying());
+          playBoneconduct.play("SAID.wav");
+          while (playBoneconduct.isPlaying());
 
           for (int c = 0; c < 6; c++) {
             if (recvdMessage.msg == UM_array[c].msg) {
@@ -422,7 +430,8 @@ void loop() {
         strip.clear();
 
         // BONE CONDUCTION CONFIRMATION
-        // playBoneconduct.play("YOU SENT" AUDIO FILE);
+        playBoneconduct.play("YOUSAID.wav");
+        while (playBoneconduct.isPlaying());
         playBoneconduct.play(audio_messages_array[b]); 
 
         transmitMessageAsync(UM_array[b]); // Add to queue!
