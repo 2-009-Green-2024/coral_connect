@@ -114,20 +114,22 @@ AudioConnection          patchCord4(inputAmp, 0, inputFFT, 0);
 Each bin is numbered 0-1023 and has a float with its amplitude
 SamplingBuffer is a time-valued array that records bin number
 */
-#define MESSAGE_BIT_DELAY 150 // ms between bits
+#define MESSAGE_BIT_DELAY 250 // ms between bits
 #define NUM_SAMPLES ((int)(((MESSAGE_BIT_DELAY / 10.0) * (86.0 / 100.0)) + 1.0 + 0.9999))
 int16_t samplingBuffer[NUM_SAMPLES]; // BIN indices
 uint16_t samplingPointer = 0; //How many samples have we seen?
 #define MESSAGE_LENGTH UnderwaterMessage::size
 bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
+#define FFT_BIN_WIDTH 43.0664
 #define MESSAGE_START_FREQ 20000 // Hz (1/sec)
-#define MESSAGE_0_FREQ 15000 // Hz
-#define MESSAGE_1_FREQ 10000 // Hz
-#define MIN_VALID_AMP 0.4
+#define MESSAGE_0_FREQ 17500 // Hz
+#define MESSAGE_1_FREQ 15000 // Hz
+#define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
+#define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
+#define MIN_VALID_AMP 0.1
 #define MAX_VALID_AMP 1.5
 #define BOUNDS_FREQ 1500
-
 typedef enum {
   LISTENING, //Waiting for start frequency
   CHECK_START,
@@ -255,6 +257,7 @@ void setup() {
     // Get BC transducer amp up and running 
     audioamp.begin();
     audioamp.setGain(30);
+
     // Setup receiver state machine, and transition states
     transitionReceivingState(LISTENING);
     transitionOperatingMode(RECEIVE);
@@ -266,6 +269,7 @@ void setup() {
     delay(100);
 }
 
+// LED blinky anim stuff
 int counter = 0;
 bool dir = 1;
 long lastLEDUpdateTime = 0;
@@ -322,14 +326,14 @@ void loop() {
     int binNumber = 0;
     for (int i = 0; i < 1024; i++) {
       float n = inputFFT.read(i);
-      if (n > maxBinAmp) {
+      if (n > maxBinAmp && i >= FFT_BIN_CUTOFF) { // Ensure we only read above the lowpass cutoff
         maxBinAmp = n;
         binNumber = i;
       }
     }
-    // Serial.print((double)binNumber*(double)43.0664);
-    // Serial.print("Hz@");
-    // Serial.println(maxBinAmp);
+    Serial.print((double)binNumber*(double)FFT_BIN_WIDTH);
+    Serial.print("Hz@");
+    Serial.println(maxBinAmp);
     if (sampling) { // Valid start freq was received, message is actively being received 
       if (validAmplitude(maxBinAmp)) {
         samplingBuffer[samplingPointer] = binNumber; // Commit sample (bin number) to memory
@@ -346,7 +350,7 @@ void loop() {
     
     // We get valid message start tone!
     if (curReceivingState == LISTENING) {
-      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0664, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)FFT_BIN_WIDTH, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
         transitionReceivingState(CHECK_START); // Check start is actively checking if we've gotten start frequencies before recording the message 
       }
     } else if (curReceivingState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
@@ -390,10 +394,15 @@ void loop() {
           Serial.print((recvdMessage.data >> i) & 1);
         }
 
+        strip.fill(red, 0, recvdMessage.id+1);
+        strip.show();
+        lastLEDUpdateTime = millis() + 1000;
+
         if (validUnderwaterMessage(recvdMessage)) {
           // Play audio corresponding to usert
           Serial.print(" --- USER: ");
           Serial.print(user_ids_array[recvdMessage.id]);
+
           playBoneconduct.play("USER.wav");
           while (playBoneconduct.isPlaying());
           playBoneconduct.play(audio_ids_array[recvdMessage.id]);
@@ -408,10 +417,6 @@ void loop() {
                 playBoneconduct.play(audio_messages_array[c]);
             }
           }
-
-          strip.fill(red, 0, recvdMessage.id+1);
-          strip.show();
-          lastLEDUpdateTime = millis() + 1000;
         }
 
         transitionReceivingState(LISTENING); // Return to listening state
@@ -429,6 +434,11 @@ void loop() {
         Serial.println(b);
         strip.clear();
 
+        // LED CONFIRMATION
+        strip.fill(red, 0, b+1);
+        strip.show();
+        lastLEDUpdateTime = millis() + 1000;
+
         // BONE CONDUCTION CONFIRMATION
         playBoneconduct.play("YOUSAID.wav");
         while (playBoneconduct.isPlaying());
@@ -442,11 +452,6 @@ void loop() {
             Serial.print((UM_array[b].data >> i) & 1);
         }
         Serial.println(); // New line after printing bits
-
-        // LED CONFIRMATION
-        strip.fill(red, 0, b+1);
-        strip.show();
-        lastLEDUpdateTime = millis() + 1000;
       }
     }
   }
@@ -557,7 +562,7 @@ double sampleBufferMax() {
     }
   }
   // Return frequency in Hz based on bin number
-  return (double)binNumber * 43.0664; // Adjust factor if needed for your sample rate/FFT size
+  return (double)binNumber * FFT_BIN_WIDTH; // Adjust factor if needed for your sample rate/FFT size
 }
 
 // Function to transmit the UnderwaterMessage asynchronously
