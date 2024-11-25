@@ -87,6 +87,9 @@ const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOO
 const int micInput = AUDIO_INPUT_MIC;
 const int chipSelect = 10; 
 
+// potentiometer (volume control)
+const int potPin = 20;
+
 // SELECT SAMPLE RATE
 const uint32_t sampleRate = 44100;
 //const uint32_t sampleRate = 96000;
@@ -123,8 +126,11 @@ bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
 #define FFT_BIN_WIDTH 43.0664
 #define MESSAGE_START_FREQ 20000 // Hz (1/sec)
-#define MESSAGE_0_FREQ 17500 // Hz
-#define MESSAGE_1_FREQ 15000 // Hz
+#define MESSAGE_0_FREQ 15000 // Hz
+#define MESSAGE_1_FREQ 17500 // Hz
+// #define MESSAGE_START_FREQ 15000 // Hz (1/sec)
+// #define MESSAGE_0_FREQ 12000 // Hz
+// #define MESSAGE_1_FREQ 15000 // Hz
 #define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
 #define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
 #define MIN_VALID_AMP 0.1
@@ -157,8 +163,8 @@ typedef enum {
 OPERATING_MODE mode = RECEIVE;
 
 void setup() {
-    Serial.begin(115200);
-    
+    // Serial.begin(115200);
+
     AudioMemory(500);
 
     /******** INITIALIZATION */
@@ -276,10 +282,42 @@ long lastLEDUpdateTime = 0;
 long lastButtonCheckTime = 0;
 
 void loop() {
+  // Serial.println(mode);
   if (toneStackPos == 0) {
     strip.clear(); // Set all pixel colors to 'off' if queue is empty
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
   }
+
+  int pot_time_interval = 2;
+  int MAXpotVal = 0;
+  int PotStart = millis();
+  int PotEnd = PotStart;
+
+  while ((PotEnd - PotStart) <= pot_time_interval) {
+    // Read the potentiometer value (0-1023)
+    int potValue = analogRead(potPin);
+    if (potValue > MAXpotVal) {
+    MAXpotVal = potValue;
+    }
+    PotEnd = millis();
+    Serial.print("Potentiometer: ");
+    Serial.print(potValue);
+    Serial.print(" -> Gain: ");
+    // Serial.println(gainValue);
+  }
+  
+  // Map the potentiometer value to amplifier gain (0-30 dB)
+  int gainValue = map(MAXpotVal, 0, 1023, 0, 30);
+  
+  // Set the amplifier gain
+  audioamp.setGain(gainValue);
+  
+  // Serial monitor (debugging)
+  // Serial.print("Potentiometer: ");
+  // Serial.print(potValue);
+  // Serial.print(" -> Gain: ");
+  // Serial.println(gainValue);
+  // delay(1000);
 
   // LED pulsating effect!
   if (millis() > lastLEDUpdateTime) {
