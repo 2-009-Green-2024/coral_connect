@@ -87,7 +87,7 @@ const int micInput = AUDIO_INPUT_MIC;
 const int chipSelect = 10; 
 
 // potentiometer (volume control)
-const int potPin = 20;
+const int potPin = 15;
 
 // SELECT SAMPLE RATE
 const uint32_t sampleRate = 44100;
@@ -284,49 +284,18 @@ void loop() {
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
   }
 
-  int pot_time_interval = 50;
-  int MAXpotVal = 0;
-  int PotStart = millis();
-  int PotEnd = PotStart;
-
-  while ((PotEnd - PotStart) <= pot_time_interval) {
-    // Read the potentiometer value (0-1023)
-    int potValue = analogRead(potPin);
-    if (potValue > MAXpotVal) {
-    MAXpotVal = potValue;
-    }
-    PotEnd = millis();
-  }
-  
+  int potValue = analogRead(potPin);
   // Map the potentiometer value to amplifier gain (0-30 dB)
-  int gainValue = map(MAXpotVal, 0, 1023, 0, 30);
-  int volValue = 25;
+  int gainValue = map(potValue, 0, 1023, 0, 30);
 
-  // no volume
-  if (gainValue >= 0 && gainValue <= 5) {
-    volValue = 0;
-    Serial.print(volValue);
-  }
-  // medium volume
-  if (gainValue >= 6 && gainValue <= 22) {
-    volValue = 15;
-    Serial.print(volValue);
-  }
-  // high volume
-  if (gainValue >= 23 && gainValue <= 30) {
-    volValue = 25;
-    Serial.print(volValue);
-  }
+  // Set the amplifier gain
+  audioamp.setGain(gainValue);
 
-  // Set the volume value (amplifier gain)
-  audioamp.setGain(volValue);
-
-  // Serial.print("Potentiometer max val: ");
-  // Serial.print(MAXpotVal);
+  // playBoneconduct.play("ONE.wav");
+  // Serial.print("Potentiometer val: ");
+  // Serial.print(potValue);
   // Serial.print(" -> Gain: ");
   // Serial.println(gainValue);
-  // Serial.print("Volume val: ");
-  // Serial.print(volValue);
 
   // LED pulsating effect!
   if (millis() > lastLEDUpdateTime) {
