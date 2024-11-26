@@ -86,6 +86,9 @@ const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOO
 const int micInput = AUDIO_INPUT_MIC;
 const int chipSelect = 10; 
 
+// potentiometer (volume control)
+const int potPin = 20;
+
 // SELECT SAMPLE RATE
 const uint32_t sampleRate = 44100;
 //const uint32_t sampleRate = 96000;
@@ -280,6 +283,50 @@ void loop() {
     strip.clear(); // Set all pixel colors to 'off' if queue is empty
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
   }
+
+  int pot_time_interval = 50;
+  int MAXpotVal = 0;
+  int PotStart = millis();
+  int PotEnd = PotStart;
+
+  while ((PotEnd - PotStart) <= pot_time_interval) {
+    // Read the potentiometer value (0-1023)
+    int potValue = analogRead(potPin);
+    if (potValue > MAXpotVal) {
+    MAXpotVal = potValue;
+    }
+    PotEnd = millis();
+  }
+  
+  // Map the potentiometer value to amplifier gain (0-30 dB)
+  int gainValue = map(MAXpotVal, 0, 1023, 0, 30);
+  int volValue = 25;
+
+  // no volume
+  if (gainValue >= 0 && gainValue <= 5) {
+    volValue = 0;
+    Serial.print(volValue);
+  }
+  // medium volume
+  if (gainValue >= 6 && gainValue <= 22) {
+    volValue = 15;
+    Serial.print(volValue);
+  }
+  // high volume
+  if (gainValue >= 23 && gainValue <= 30) {
+    volValue = 25;
+    Serial.print(volValue);
+  }
+
+  // Set the volume value (amplifier gain)
+  audioamp.setGain(volValue);
+
+  // Serial.print("Potentiometer max val: ");
+  // Serial.print(MAXpotVal);
+  // Serial.print(" -> Gain: ");
+  // Serial.println(gainValue);
+  // Serial.print("Volume val: ");
+  // Serial.print(volValue);
 
   // LED pulsating effect!
   if (millis() > lastLEDUpdateTime) {
