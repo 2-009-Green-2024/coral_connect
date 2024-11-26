@@ -4,7 +4,6 @@
 #include <cmath>
 #include <iostream>
 
-
 //Import audio-related libraries
 #include <Audio.h>
 #include <SD.h>
@@ -15,15 +14,16 @@
 #include <Adafruit_LC709203F.h> // Battery monitor
 #include <Adafruit_MCP23X17.h> // IO expander
 #include <Adafruit_NeoPixel.h> // LEDs
+#include <Adafruit_TPA2016.h> // BC transducer amp
 #include "pindefs.h" // Pin definitions
 
 // Import audio samples
 // TODO: NEED TO COMPRESS THESE FILES
 // #include "AudioAir.h"
 // #include "AudioCheck_in.h"
-#include "AudioFish.h"
-#include "AudioLook.h"
-// #include "AudioAscend.h"
+// #include "AudioFish.h"
+// #include "AudioLook.h"
+//#include "AudioAscend.h"
 // #include "AudioSos.h"
 
 // audio shield SD card
@@ -49,13 +49,14 @@ union UnderwaterMessage {
 
 // Declare NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGBW + NEO_KHZ800);
-
+// GRB color order
 uint32_t red = strip.Color(0, 64, 0, 0);
-uint32_t greenishwhite = strip.Color(0, 64, 0, 64); // r g b w
-uint32_t bluishwhite = strip.Color(64, 0, 0, 64);
+uint32_t greenishwhite = strip.Color(64, 0, 0, 64); // g r b w
+uint32_t bluishwhite = strip.Color(0, 0, 64, 64);
 
 Adafruit_MCP23X17 mcp;
 Adafruit_LC709203F lc;
+Adafruit_TPA2016 audioamp = Adafruit_TPA2016();
 
 uint8_t buttons[6] = {BUTTON_PIN1, BUTTON_PIN2, BUTTON_PIN3, BUTTON_PIN4, BUTTON_PIN5, BUTTON_PIN6};
 // Underwater message array of messages to be sent upon each button press
@@ -64,17 +65,26 @@ UnderwaterMessage UM_array[6];
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
 // TODO NEED TO RECORD AND PUT IN USER ID AUDIO FILES
+
+int user_id_current = 1;
+
+static const char *audio_ids_array[16] = {"ONE.wav", "TWO.wav", "THREE.wav", "FOUR.wav", "FIVE.wav", "SIX.wav", "SEVEN.wav", "EIGHT.wav", "NINE.wav", "TEN.wav", "ELEVEN.wav", "TWELVE.wav", "THIRTEEN.wav", "FOURTEEN.wav", "FIFTEEN.wav", "SIXTEEN.wav"};
+
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
-const unsigned int *audio_ids_array[16] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
+
+// const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
 
 // Message array, pointers to each message and all audio messages
 static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
 // const unsigned int *audio_messages_array[6] = {AudioAir, AudioAscend, AudioFish, AudioLook, AudioCheckin, AudioSos};
-const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioFish, AudioLook, AudioFish, AudioLook};
+// const unsigned int *audio_messages_array[6] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
+const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOOK.wav", "CHECKIN.wav", "SOS.wav"}; 
+// const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioAir, AudioLook, AudioFish, AudioLook};
 
 
 /************* AUDIO SHIELD / PIPELINE SETUP */
 const int micInput = AUDIO_INPUT_MIC;
+const int chipSelect = 10; 
 
 // SELECT SAMPLE RATE
 const uint32_t sampleRate = 44100;
@@ -83,7 +93,8 @@ const uint32_t sampleRate = 44100;
 //const uint32_t sampleRate = 234000;
 
 /************** AUDIO OUTPUT CHAIN (BONE CONDUCTION OUT) */
-AudioPlayMemory          playBoneconduct;       //xy=87,384
+AudioPlaySdWav          playBoneconduct;       //xy=87,384
+// AudioPlayMemory          playBoneconduct;       //xy=87,384
 AudioAmplifier           outputAmp;           //xy=309,351
 AudioOutputI2S           audioOutput;           //xy=573,377
 AudioConnection          patchCord1(playBoneconduct, outputAmp);
@@ -102,17 +113,20 @@ AudioConnection          patchCord4(inputAmp, 0, inputFFT, 0);
 Each bin is numbered 0-1023 and has a float with its amplitude
 SamplingBuffer is a time-valued array that records bin number
 */
-#define MESSAGE_BIT_DELAY 125 // ms between bits
+#define MESSAGE_BIT_DELAY 250 // ms between bits
 #define NUM_SAMPLES ((int)(((MESSAGE_BIT_DELAY / 10.0) * (86.0 / 100.0)) + 1.0 + 0.9999))
 int16_t samplingBuffer[NUM_SAMPLES]; // BIN indices
 uint16_t samplingPointer = 0; //How many samples have we seen?
 #define MESSAGE_LENGTH UnderwaterMessage::size
 bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
-#define MESSAGE_START_FREQ 10000 // Hz (1/sec)
-#define MESSAGE_0_FREQ 5000 // Hz
-#define MESSAGE_1_FREQ 7500 // Hz
-#define MIN_VALID_AMP 0.4
+#define FFT_BIN_WIDTH 43.0664
+#define MESSAGE_START_FREQ 20000 // Hz (1/sec)
+#define MESSAGE_0_FREQ 17500 // Hz
+#define MESSAGE_1_FREQ 15000 // Hz
+#define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
+#define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
+#define MIN_VALID_AMP 0.1
 #define MAX_VALID_AMP 1.5
 #define BOUNDS_FREQ 1500
 
@@ -157,13 +171,21 @@ void setup() {
         - If anything fails: display full red on LED strip
     */
 
-    // // Initialize SD card
-    
-    // if (!SD.begin(chipSelect)) {
-    //   Serial.println("SD card initialization failed!");
-    //   return;
+    // Initialize SD card
+    if (!SD.begin(10)) {
+      Serial.println("SD card initialization failed!");
+      return;
+    }
+    Serial.println("SD card initialized.");
+    // for (int i=0; i<7; i++) {
+    //   if (SD.exists(audio_messages_array[i]));
+    //   Serial.println("right file found");
     // }
-    // Serial.println("SD card initialized.");
+    // if (SD.exists("AIR.wav")) {
+    //   Serial.println("AIR.wav exists.");
+    // } else {
+    // Serial.println("example.txt doesn't exist.");
+    // }
 
     // Setup pin modes
     pinMode(LED_PIN, OUTPUT);
@@ -173,10 +195,10 @@ void setup() {
     // Get LEDs up and running
     strip.begin();
     strip.show(); // Initialize all pixels to 'off'
-    strip.setBrightness(32);
+    strip.setBrightness(64);
 
     // LEDs: show that we are alive
-    strip.fill(bluishwhite, 0, 8); // light up entire strip
+    strip.fill(bluishwhite, 0, 12); // light up entire strip
     strip.show();
     // keep strip on, then continue with rest of installation
     delay(500); 
@@ -191,6 +213,10 @@ void setup() {
     if (!mcp.begin_I2C()) {
         Serial.println("Error: I2C connection with IO expander.");
         initializationError(2);
+    }
+    //Pinmode for I/O expander pins
+    for (int i=0; i<6; i++) {
+      mcp.pinMode(i, INPUT_PULLUP);
     }
     initializationPass(2);
     
@@ -219,7 +245,7 @@ void setup() {
 
     // Get audio shield up and running
     inputAmp.gain(2);        // amplify mic to useful range
-    outputAmp.gain(1);
+    outputAmp.gain(2);
     audioShield.enable();
     audioShield.inputSelect(myInput);
     audioShield.micGain(90);
@@ -228,21 +254,45 @@ void setup() {
     Serial.printf("SGTL running at samplerate: %d\n", sampleRate);
     initializationPass(4);
     
+    // Get BC transducer amp up and running 
+    audioamp.begin();
+    audioamp.setGain(30);
+
     // Setup receiver state machine, and transition states
     transitionReceivingState(LISTENING);
     transitionOperatingMode(RECEIVE);
     initializationPass(6);
 
     Serial.println("Done initializing! Starting now! In receiving default mode!");
-    strip.fill(bluishwhite, 0, 8); // light up entire strip, all set up!
+    strip.fill(bluishwhite, 0, 12); // light up entire strip, all set up!
     strip.show();
     delay(100);
 }
+
+// LED blinky anim stuff
+int counter = 0;
+bool dir = 1;
+long lastLEDUpdateTime = 0;
+long lastButtonCheckTime = 0;
 
 void loop() {
   if (toneStackPos == 0) {
     strip.clear(); // Set all pixel colors to 'off' if queue is empty
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
+  }
+
+  // LED pulsating effect!
+  if (millis() > lastLEDUpdateTime) {
+    uint32_t color = strip.Color(counter, 0, 0, 30); // r g b w
+    if (dir) {
+      counter++;
+    } else {
+      counter--;
+    }
+    if (counter <= 0 || counter >= 255) dir = !dir;
+    strip.fill(color);
+    strip.show();
+    lastLEDUpdateTime = millis() + 1;
   }
   
   //Deal with tone sending (asynchronous tone)
@@ -276,14 +326,14 @@ void loop() {
     int binNumber = 0;
     for (int i = 0; i < 1024; i++) {
       float n = inputFFT.read(i);
-      if (n > maxBinAmp) {
+      if (n > maxBinAmp && i >= FFT_BIN_CUTOFF) { // Ensure we only read above the lowpass cutoff
         maxBinAmp = n;
         binNumber = i;
       }
     }
-    // Serial.print((double)binNumber*(double)43.0);
-    // Serial.print("Hz@");
-    // Serial.println(maxBinAmp);
+    Serial.print((double)binNumber*(double)FFT_BIN_WIDTH);
+    Serial.print("Hz@");
+    Serial.println(maxBinAmp);
     if (sampling) { // Valid start freq was received, message is actively being received 
       if (validAmplitude(maxBinAmp)) {
         samplingBuffer[samplingPointer] = binNumber; // Commit sample (bin number) to memory
@@ -297,10 +347,10 @@ void loop() {
         // Serial.println(samplingPointer);
       }
     }
-
+    
     // We get valid message start tone!
     if (curReceivingState == LISTENING) {
-      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)43.0, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)FFT_BIN_WIDTH, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
         transitionReceivingState(CHECK_START); // Check start is actively checking if we've gotten start frequencies before recording the message 
       }
     } else if (curReceivingState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
@@ -338,16 +388,30 @@ void loop() {
         Serial.print(recvdMessage.msg);
         Serial.print(", ID = ");
         Serial.print(recvdMessage.id);
+        Serial.print(" --- ");
+        for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
+          // Shift and mask to get each bit
+          Serial.print((recvdMessage.data >> i) & 1);
+        }
+
+        strip.fill(red, 0, recvdMessage.id+1);
+        strip.show();
+        lastLEDUpdateTime = millis() + 1000;
 
         if (validUnderwaterMessage(recvdMessage)) {
           // Play audio corresponding to usert
-          playBoneconduct.play(audio_ids_array[message.id]);
-          
           Serial.print(" --- USER: ");
-          Serial.print(user_ids_array[message.id]);
+          Serial.print(user_ids_array[recvdMessage.id]);
+
+          playBoneconduct.play("USER.wav");
+          while (playBoneconduct.isPlaying());
+          playBoneconduct.play(audio_ids_array[recvdMessage.id]);
+          while (playBoneconduct.isPlaying());
+          playBoneconduct.play("SAID.wav");
+          while (playBoneconduct.isPlaying());
 
           for (int c = 0; c < 6; c++) {
-            if (message.msg == UM_array[c].msg) {
+            if (recvdMessage.msg == UM_array[c].msg) {
                 Serial.print(" --- MESSAGE:");
                 Serial.println(message_array[c]);
                 playBoneconduct.play(audio_messages_array[c]);
@@ -361,28 +425,34 @@ void loop() {
   }
 
   // BUTTONS AND TRANSMITTING
-  for (int b = 0; b < 6; b++) {
-    if (mcp.digitalRead(buttons[b]) == LOW) {
-      strip.clear();
+  if (millis() - lastButtonCheckTime >= 500) {
+    for (int b = 0; b < 6; b++) {
+      // Serial.print(mcp.digitalRead(buttons[b]));
+      if (mcp.digitalRead(buttons[b]) == LOW) {
+        lastButtonCheckTime = millis(); //Ensure 250ms between reads
+        Serial.print("Sending message ID: ");
+        Serial.println(b);
+        strip.clear();
 
-      // BONE CONDUCTION CONFIRMATION
-      // playBoneconduct.play("YOU SENT" AUDIO FILE);
-      playBoneconduct.play(audio_messages_array[b]); 
+        // LED CONFIRMATION
+        strip.fill(red, 0, b+1);
+        strip.show();
+        lastLEDUpdateTime = millis() + 1000;
 
-      transmitMessageAsync(UM_array[b]); // Add to queue!
+        // BONE CONDUCTION CONFIRMATION
+        playBoneconduct.play("YOUSAID.wav");
+        while (playBoneconduct.isPlaying());
+        playBoneconduct.play(audio_messages_array[b]); 
 
-      Serial.println("Queued message! message in binary: ");
-      for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
-          // Shift and mask to get each bit
-          Serial.print((UM_array[b].data >> i) & 1);
+        transmitMessageAsync(UM_array[b]); // Add to queue!
+
+        // Serial.println("Queued message! message in binary: ");
+        for (int i = UnderwaterMessage::size - 1; i >= 0; i--) {
+            // Shift and mask to get each bit
+            Serial.print((UM_array[b].data >> i) & 1);
+        }
+        Serial.println(); // New line after printing bits
       }
-      Serial.println(); // New line after printing bits
-
-      // LED CONFIRMATION
-      strip.fill(red, 0, b+1);
-      strip.show();
-      delay(100); // TODO fix with nicer debouncing
-      strip.clear();
     }
   }
 }
@@ -402,26 +472,13 @@ void initializationError(int error) {
 }
 
 void transitionOperatingMode(OPERATING_MODE newMode) {
-    if (newMode == RECEIVE); {
+    if (newMode == RECEIVE) {
         digitalWrite(RELAY_PIN, LOW); // make relays go to listen mode
     } else if (newMode == TRANSMIT) {
         digitalWrite(RELAY_PIN, HIGH); // make relays go into transmit mode
     }
     mode = newMode;
 }
-
-// void playWavFile(const char *filename) {
-//   Serial.print("Playing file: ");
-//   Serial.println(filename);
-
-//   playSdWav.play(filename);
-//   delay(10);  // Short delay to ensure playback starts
-
-//   // Wait until playback finishes
-//   while (playSdWav.isPlaying()) {
-//     // Keep looping while the file is playing
-//   }
-// }
 
 void printBatteryData(){
   //colors
@@ -492,8 +549,7 @@ double sampleBufferMax() {
   for (uint16_t i = 0; i < NUM_SAMPLES; i++) {
     binNumber = samplingBuffer[i];
     if (binNumber < 1024) { // Ensure binNumber is within the valid range
-      frequency_hist[binNumber]++
-  transitionOperatingMode(TRANSMIT); // Switch relays to transmit mode;
+      frequency_hist[binNumber]++;
     }
   }
   int max_bin_count = 0;
@@ -506,7 +562,7 @@ double sampleBufferMax() {
     }
   }
   // Return frequency in Hz based on bin number
-  return (double)binNumber * 43.0; // Adjust factor if needed for your sample rate/FFT size
+  return (double)binNumber * FFT_BIN_WIDTH; // Adjust factor if needed for your sample rate/FFT size
 }
 
 // Function to transmit the UnderwaterMessage asynchronously
@@ -522,7 +578,7 @@ void transmitMessageAsync(UnderwaterMessage message) {
       addToneQueue(MESSAGE_0_FREQ, MESSAGE_BIT_DELAY);
     }
   }
-  addToneQueue(MESSAGE_0_FREQ, (int)(MESSAGE_BIT_DELAY/2)); // End transmission with a stop tone
+  addToneQueue(MESSAGE_0_FREQ, (int)(MESSAGE_BIT_DELAY)); // End transmission with a stop tone
 }
 
 void addToneQueue(int freq, unsigned long delay) {
