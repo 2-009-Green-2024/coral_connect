@@ -18,23 +18,6 @@
 #include <Adafruit_TPA2016.h> // BC transducer amp
 #include "pindefs.h" // Pin definitions
 
-// Import audio samples
-// TODO: NEED TO COMPRESS THESE FILES
-#include "AudioAir.h"
-// #include "AudioCheck_in.h"
-// #include "AudioFish.h"
-#include "AudioLook.h"
-//#include "AudioAscend.h"
-// #include "AudioSos.h"
-
-// audio shield SD card
-
-// AudioPlaySdWav playSdWav;
-// AudioOutputI2S audioOutput;
-// AudioConnection patchCord1(playSdWav, 0, audioOutput, 0);
-// AudioConnection patchCord2(playSdWav, 1, audioOutput, 1);
-// AudioControlSGTL5000 audioShield;
-
 /************ MESSAGE PACKETS */
 union UnderwaterMessage {
     struct {
@@ -49,11 +32,11 @@ union UnderwaterMessage {
 /******* ADDITIONAL DEVICE SETUP */
 
 // Declare NeoPixel strip object:
-Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGBW + NEO_KHZ800);
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 // GRB color order
-uint32_t red = strip.Color(0, 64, 0, 0);
-uint32_t greenishwhite = strip.Color(64, 0, 0, 64); // g r b w
-uint32_t bluishwhite = strip.Color(0, 0, 64, 64);
+uint32_t red = strip.Color(64, 0, 0, 0);
+uint32_t greenishwhite = strip.Color(0, 64, 0); // g r b w
+uint32_t bluishwhite = strip.Color(0, 0, 64, 0);
 
 Adafruit_MCP23X17 mcp;
 Adafruit_LC709203F lc;
@@ -65,12 +48,8 @@ UnderwaterMessage UM_array[6];
 
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
-// TODO NEED TO RECORD AND PUT IN USER ID AUDIO FILES
-
-int user_id_current = 1;
-
+int user_id_current = 1; //WHAT IS OUR ID
 static const char *audio_ids_array[16] = {"ONE.wav", "TWO.wav", "THREE.wav", "FOUR.wav", "FIVE.wav", "SIX.wav", "SEVEN.wav", "EIGHT.wav", "NINE.wav", "TEN.wav", "ELEVEN.wav", "TWELVE.wav", "THIRTEEN.wav", "FOURTEEN.wav", "FIFTEEN.wav", "SIXTEEN.wav"};
-
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
 
 // const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
@@ -88,8 +67,8 @@ const int micInput = AUDIO_INPUT_MIC;
 const int chipSelect = 10; 
 
 // SELECT SAMPLE RATE
-const uint32_t sampleRate = 44100;
-//const uint32_t sampleRate = 96000;
+// const uint32_t sampleRate = 44100;
+const uint32_t sampleRate = 96000;
 // const uint32_t sampleRate = 192000;
 //const uint32_t sampleRate = 234000;
 

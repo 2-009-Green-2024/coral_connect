@@ -3,7 +3,7 @@
 
     // Pin connected to neopixels strip
     // THESE ARE PINS ON THE TEENSY
-    #define LED_PIN  14
+    #define LED_PIN  2
     // #define LED_PIN 10 // placeholder during simple transmitter upload
     #define LED_COUNT 12
 
@@ -17,11 +17,11 @@
     #define BUTTON_PIN6 5
 
     // Hydrophone output pin
-    #define HYDROPHONE_PIN 22 // Which pin is the output?
+    #define HYDROPHONE_PIN 3 // Which pin is the output?
     // #define HYDROPHONE_PIN 14 // For uploading the simple transmitter code
     
     // Relay pin
-    #define RELAY_PIN 17
+    #define RELAY_PIN 4
 
     // Current ID (to be transmitted)
     uint8_t user_ID = 1;
