@@ -12,7 +12,7 @@
 #include <Wire.h>
 
 // Import other device libraries
-#include <Adafruit_LC709203F.h> // Battery monitor
+#include "Adafruit_MAX1704X.h" // Battery monitor
 #include <Adafruit_MCP23X17.h> // IO expander
 #include <Adafruit_NeoPixel.h> // LEDs
 #include <Adafruit_TPA2016.h> // BC transducer amp
@@ -38,11 +38,10 @@ uint32_t red = strip.Color(64, 0, 0, 0);
 uint32_t greenishwhite = strip.Color(0, 64, 0); // g r b w
 uint32_t bluishwhite = strip.Color(0, 0, 64, 0);
 
-Adafruit_MCP23X17 mcp;
-Adafruit_LC709203F lc;
-Adafruit_TPA2016 audioamp = Adafruit_TPA2016();
+Adafruit_MCP23X17 mcp; // I/O expander
+Adafruit_MAX17048 maxlipo; // Battery monitor
+Adafruit_TPA2016 audioamp = Adafruit_TPA2016(); // Audio amplifier
 
-uint8_t buttons[6] = {BUTTON_PIN1, BUTTON_PIN2, BUTTON_PIN3, BUTTON_PIN4, BUTTON_PIN5, BUTTON_PIN6};
 // Underwater message array of messages to be sent upon each button press
 UnderwaterMessage UM_array[6];
 
@@ -56,10 +55,10 @@ static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "
 
 // Message array, pointers to each message and all audio messages
 static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
-// const unsigned int *audio_messages_array[6] = {AudioAir, AudioAscend, AudioFish, AudioLook, AudioCheckin, AudioSos};
-// const unsigned int *audio_messages_array[6] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
-const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOOK.wav", "CHECKIN.wav", "SOS.wav"}; 
-// const unsigned int *audio_messages_array[6] = {AudioFish, AudioLook, AudioAir, AudioLook, AudioFish, AudioLook};
+const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOOK.wav", "CHECKIN.wav", "SOS.wav"};
+
+// Battery percentage pointers
+const char *battery_messages_array[11] = {"0_PC.wav", "10_PC.wav", "20_PC.wav", "30_PC.wav", "40_PC.wav", "50_PC.wav", "60_PC.wav", "70_PC.wav", "80_PC.wav", "90_PC.wav", "100_PC.wav"};
 
 
 /************* AUDIO SHIELD / PIPELINE SETUP */
@@ -67,8 +66,8 @@ const int micInput = AUDIO_INPUT_MIC;
 const int chipSelect = 10; 
 
 // SELECT SAMPLE RATE
-// const uint32_t sampleRate = 44100;
-const uint32_t sampleRate = 96000;
+const uint32_t sampleRate = 44100;
+// const uint32_t sampleRate = 96000;
 // const uint32_t sampleRate = 192000;
 //const uint32_t sampleRate = 234000;
 
@@ -106,7 +105,7 @@ int bitPointer = 0;
 #define MESSAGE_1_FREQ 15000 // Hz
 #define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
 #define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
-#define MIN_VALID_AMP 0.1
+#define MIN_VALID_AMP 0.05
 #define MAX_VALID_AMP 1.5
 #define BOUNDS_FREQ 1500
 typedef enum {
@@ -126,6 +125,14 @@ unsigned long lastToneStart = 0;
 byte toneStackPos = 0;
 unsigned long lastBitChange = 0;
 
+/*************** AUDIO LOGIC (QUEUE) */
+// const byte audioBufferLength = 10*MESSAGE_LENGTH; //Arbitrarily can hold 10 messages at a time
+// int audioFnameQueue[toneBufferLength];
+// unsigned long au[toneBufferLength];
+// unsigned long lastToneStart = 0;
+// byte toneStackPos = 0;
+// unsigned long lastBitChange = 0;
+
 
 typedef enum {
   RECEIVE,
@@ -137,8 +144,6 @@ OPERATING_MODE mode = RECEIVE;
 
 void setup() {
     Serial.begin(115200);
-    
-    AudioMemory(500);
 
     /******** INITIALIZATION */
     /*
@@ -150,31 +155,18 @@ void setup() {
         - If anything fails: display full red on LED strip
     */
 
-    // Initialize SD card
-    if (!SD.begin(10)) {
-      Serial.println("SD card initialization failed!");
-      return;
-    }
-    Serial.println("SD card initialized.");
-    // for (int i=0; i<7; i++) {
-    //   if (SD.exists(audio_messages_array[i]));
-    //   Serial.println("right file found");
-    // }
-    // if (SD.exists("AIR.wav")) {
-    //   Serial.println("AIR.wav exists.");
-    // } else {
-    // Serial.println("example.txt doesn't exist.");
-    // }
-
     // Setup pin modes
     pinMode(LED_PIN, OUTPUT);
     pinMode(HYDROPHONE_PIN, OUTPUT);
     pinMode(RELAY_PIN, OUTPUT);
+
+    // Initial pin setup
+    digitalWrite(RELAY_PIN, LOW);
    
     // Get LEDs up and running
     strip.begin();
     strip.show(); // Initialize all pixels to 'off'
-    strip.setBrightness(64);
+    strip.setBrightness(LED_BRIGHTNESS);
 
     // LEDs: show that we are alive
     strip.fill(bluishwhite, 0, 12); // light up entire strip
@@ -183,69 +175,105 @@ void setup() {
     delay(500); 
     strip.clear();
 
+    // Initialize SD card
+    if (!SD.begin(10)) {
+      Serial.println("[ERROR] SD card initialization failed!");
+      initializationError(1);
+    }
+    Serial.println("[OK] SD card initialized.");
+    for (int i=0; i<6; i++) {
+      if (!SD.exists(audio_messages_array[i])) {
+        initializationError(2);
+      }
+    }
+    Serial.println("[OK] Found all audio messages for buttons.");
+    for (int i=0; i<16; i++) {
+      if (!SD.exists(audio_ids_array[i])) {
+
+        initializationError(2);
+      }
+    }
+    // Check for ID.txt and read the user ID
+    int user_ID = 0;
+    if (SD.exists("ID.txt")) {
+      File idFile = SD.open("ID.txt", FILE_READ);
+      if (idFile) {
+        String idContent = idFile.readStringUntil('\n'); // Read the number from the file
+        idContent.trim(); // Remove any whitespace or newlines
+        user_ID = idContent.toInt(); // Convert to an integer
+        Serial.print("[OK] User ID set to: ");
+        Serial.println(user_ID);
+        idFile.close();
+      } else {
+        Serial.println("[ERROR] Failed to open ID.txt!");
+        initializationError(3);
+      }
+    } else {
+      Serial.println("[ERROR] ID.txt file not found!");
+      initializationError(3);
+    }
+    initializationPass(2);
+    Serial.println("[OK] Found all audio messages for user IDs.");
+
     // Assign underwater messages
     for (int i=1; i<=sizeof(UM_array)/sizeof(UM_array[0]); i++) {
       UM_array[i] = createUnderwaterMessage(i, user_ID);
     }
+    Serial.println("[OK] Underwater messages initialized successfully");
 
     // Get IO expander up and running
-    if (!mcp.begin_I2C()) {
-        Serial.println("Error: I2C connection with IO expander.");
-        initializationError(2);
+    if (!mcp.begin_I2C(0x27)) {
+        Serial.println("[Error] I2C connection with IO expander.");
+        initializationError(3);
     }
     //Pinmode for I/O expander pins
     for (int i=0; i<6; i++) {
       mcp.pinMode(i, INPUT_PULLUP);
     }
-    initializationPass(2);
+    initializationPass(3);
+
+    Serial.println("[OK] I2C expander initialized successfully, pin directions set");
     
-    // Get battery monitor up and running
-    // Wire.setClock(100000);
-    // //Battery check setup
-    // if (!lc.begin()) {
-    // Serial.println(F("Couldnt find Adafruit LC709203F?\nMake sure a battery is plugged in!"));
-    // initializationError(6);
-    // while (1) delay(10);
-    // }
-    // Serial.println(F("Found LC709203F"));
-    // Serial.print("Version: 0x"); Serial.println(lc.getICversion(), HEX);
+    if (!maxlipo.begin()) {
+       Serial.println("[Error] Battery monitor");
+       initializationError(4);
+    }
+    Serial.print(F("[OK] Battery monitor MAX17048 initialized"));
+    Serial.print(F(" with Chip ID: 0x")); 
+    Serial.println(maxlipo.getChipID(), HEX);
+    maxlipo.setAlertVoltages(2.0, 4.2);
+    initializationPass(4);
 
-    // lc.setThermistorB(3950);
-    // Serial.print("Thermistor B = "); Serial.println(lc.getThermistorB());
-
-    // lc.setPackSize(LC709203F_APA_500MAH);
-    // lc.setAlarmVoltage(3.8);
-    // initializationPass(6);
-
-    // delay(1000);
-    // Serial.println("PRINTING BATTERY INFO");
-    // printBatteryData();
-    // delay(5000);
+    // Get BC transducer amp up and running 
+    if (!audioamp.begin()) {
+      Serial.println("[Error] TPA2016 audio amp failed to initialize");
+      initializationError(5);
+    }
+    audioamp.setGain(30);
+    Serial.println("[OK] TPA2016 initialized successfully, gain set");
 
     // Get audio shield up and running
+    AudioMemory(500);
     inputAmp.gain(2);        // amplify mic to useful range
     outputAmp.gain(2);
     audioShield.enable();
     audioShield.inputSelect(myInput);
     audioShield.micGain(90);
     audioShield.volume(1);
-    setAudioSampleI2SFreq(sampleRate); // Set I2S sampling frequency
-    Serial.printf("SGTL running at samplerate: %d\n", sampleRate);
-    initializationPass(4);
-    
-    // Get BC transducer amp up and running 
-    audioamp.begin();
-    audioamp.setGain(30);
+    // setAudioSampleI2SFreq(sampleRate); // Set I2S sampling frequency
+    Serial.printf("[OK] SGTL5000 initialized and running at samplerate: %d\n", sampleRate);
+    initializationPass(6);
 
     // Setup receiver state machine, and transition states
     transitionReceivingState(LISTENING);
     transitionOperatingMode(RECEIVE);
-    initializationPass(6);
+    initializationPass(7);
+    Serial.println("[OK] State machine initialized");
 
-    Serial.println("Done initializing! Starting now! In receiving default mode!");
-    strip.fill(bluishwhite, 0, 12); // light up entire strip, all set up!
-    strip.show();
-    delay(100);
+    Serial.println("Done initializing!! Starting now! In receiving default mode!");
+    Serial.println("Welcome to NEPTUNE >:)");
+    // Lil rainbow chase effect
+    rainbow(50);
 }
 
 // LED blinky anim stuff
@@ -254,15 +282,48 @@ bool dir = 1;
 long lastLEDUpdateTime = 0;
 long lastButtonCheckTime = 0;
 
+// Battery monitor stuff
+float lastCellVoltage = 0.0;
+float lastPercentage = 100.0; // Initialize with a full battery percentage
+unsigned long lastBattCheckTime = 0;
+
 void loop() {
   if (toneStackPos == 0) {
     strip.clear(); // Set all pixel colors to 'off' if queue is empty
     transitionOperatingMode(RECEIVE); // Switch relays to receive mode
   }
 
+   if (millis() - lastBattCheckTime >= 1000) { // Check every 1 second
+    lastBattCheckTime = millis();
+
+    float cellVoltage = maxlipo.cellVoltage(); // Get cell voltage
+    if (isnan(cellVoltage)) {
+      Serial.println("Failed to read cell voltage, check battery is connected!");
+    } else if (fAbs(cellVoltage - lastCellVoltage) > 0.05) {
+      float cellPercent = maxlipo.cellPercent(); // Get battery percentage
+      Serial.print("Battery V:");
+      Serial.println(cellPercent);
+
+      // Check if the battery percentage has dropped by at least 10%
+      if ((int(cellPercent) / 10) < (int(lastPercentage) / 10)) {
+        int percentRange = (int(cellPercent) / 10) * 10;
+        Serial.print("Battery dropped to ");
+        Serial.print(percentRange);
+        Serial.println("% range.");
+
+        playBoneconduct.play(battery_messages_array[(int)(percentRange/10)]);
+        while (playBoneconduct.isPlaying());
+
+        lastPercentage = cellPercent; // Update the last known percentage
+      }
+
+      lastCellVoltage = cellVoltage; // Update the last known voltage
+    }
+  }
+
   // LED pulsating effect!
   if (millis() > lastLEDUpdateTime) {
-    uint32_t color = strip.Color(counter, 0, 0, 30); // r g b w
+    uint32_t color = strip.Color(0, counter, 0, 0); // r g b w
     if (dir) {
       counter++;
     } else {
@@ -279,13 +340,13 @@ void loop() {
     if (millis() - lastToneStart > toneDelayQueue[0]) {
       // Serial.print("ToneQueue: ");
       for (int i=1; i<toneBufferLength; i++) { //Left shift all results by 1
-          // Serial.print(toneFreqQueue[i]);
-          // Serial.print("Hz@");
-          // Serial.print(toneDelayQueue[i]);
+          Serial.print(toneFreqQueue[i]);
+          Serial.print("Hz@");
+          Serial.print(toneDelayQueue[i]);
           toneFreqQueue[i-1] = toneFreqQueue[i];
           toneDelayQueue[i-1] = toneDelayQueue[i];
       }
-      // Serial.println();
+      Serial.println();
       toneStackPos--; //we’ve removed one from the stack
       if (toneStackPos > 0) { //is there something new to start playing?
           if (toneFreqQueue[0] > 0) {
@@ -407,7 +468,7 @@ void loop() {
   if (millis() - lastButtonCheckTime >= 500) {
     for (int b = 0; b < 6; b++) {
       // Serial.print(mcp.digitalRead(buttons[b]));
-      if (mcp.digitalRead(buttons[b]) == LOW) {
+      if (mcp.digitalRead(b) == LOW) {
         lastButtonCheckTime = millis(); //Ensure 250ms between reads
         Serial.print("Sending message ID: ");
         Serial.println(b);
@@ -436,6 +497,11 @@ void loop() {
   }
 }
 
+float fAbs(float n) {
+  if (n < 0) return -n;
+  return n;
+}
+
 void initializationPass(int check) {
     strip.fill(greenishwhite, 0, check); // check = number of tiles lit up
     strip.show();
@@ -448,6 +514,8 @@ void initializationError(int error) {
     strip.show();
     delay(2000);
     strip.clear();
+
+    while(true);
 }
 
 void transitionOperatingMode(OPERATING_MODE newMode) {
@@ -457,38 +525,6 @@ void transitionOperatingMode(OPERATING_MODE newMode) {
         digitalWrite(RELAY_PIN, HIGH); // make relays go into transmit mode
     }
     mode = newMode;
-}
-
-void printBatteryData(){
-  //colors
-  uint32_t green = strip.Color(0, 255, 0);
-  uint32_t red = strip.Color(255, 0, 0);
-  uint32_t orange = strip.Color(255, 150, 0);
-  uint32_t yellow = strip.Color(255, 255, 0);
-
-    // time = millis()
-    Serial.print("Batt_Voltage:");
-    Serial.print(lc.cellVoltage(), 3);
-    Serial.print("\t");
-    Serial.print("Batt_Percent:");
-    Serial.print(lc.cellPercent(), 1);
-    Serial.print("\t");
-    Serial.print("Batt_Temp:");
-    Serial.println(lc.getCellTemperature(), 1);
-
-    if (lc.cellPercent() > 80){
-        strip.fill(green, 0, 7);
-    }
-    else if (lc.cellPercent() > 60){
-        strip.fill(yellow, 0, 5);
-    }
-    else if (lc.cellPercent() > 20){
-        strip.fill(orange, 0, 3);
-    }
-    else{
-        strip.fill(red, 0, 1);
-    }
-    strip.show();
 }
 
 void clearSampleBuffer() {
@@ -612,6 +648,47 @@ UnderwaterMessage createUnderwaterMessage(uint8_t m, uint8_t i) {
     return message;
 }
 
+// Rainbow-enhanced theater marquee. Pass delay time (in ms) between frames.
+void theaterChaseRainbow(int wait) {
+  int firstPixelHue = 0;     // First pixel starts at red (hue 0)
+  for(int a=0; a<30; a++) {  // Repeat 30 times...
+    for(int b=0; b<3; b++) { //  'b' counts from 0 to 2...
+      strip.clear();         //   Set all pixels in RAM to 0 (off)
+      // 'c' counts up from 'b' to end of strip in increments of 3...
+      for(int c=b; c<strip.numPixels(); c += 3) {
+        // hue of pixel 'c' is offset by an amount to make one full
+        // revolution of the color wheel (range 65536) along the length
+        // of the strip (strip.numPixels() steps):
+        int      hue   = firstPixelHue + c * 65536L / strip.numPixels();
+        uint32_t color = strip.gamma32(strip.ColorHSV(hue)); // hue -> RGB
+        strip.setPixelColor(c, color); // Set pixel 'c' to value 'color'
+      }
+      strip.show();                // Update strip with new contents
+      delay(wait);                 // Pause for a moment
+      firstPixelHue += 65536 / 90; // One cycle of color wheel over 90 frames
+    }
+  }
+}
+
+// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
+void rainbow(int wait) {
+  // Hue of first pixel runs 5 complete loops through the color wheel.
+  // Color wheel has a range of 65536 but it's OK if we roll over, so
+  // just count from 0 to 5*65536. Adding 256 to firstPixelHue each time
+  // means we'll make 5*65536/256 = 1280 passes through this loop:
+  for(long firstPixelHue = 0; firstPixelHue < 16384; firstPixelHue += 256) {
+    // strip.rainbow() can take a single argument (first pixel hue) or
+    // optionally a few extras: number of rainbow repetitions (default 1),
+    // saturation and value (brightness) (both 0-255, similar to the
+    // ColorHSV() function, default 255), and a true/false flag for whether
+    // to apply gamma correction to provide 'truer' colors (default true).
+    strip.rainbow(firstPixelHue);
+    // Above line is equivalent to:
+    // strip.rainbow(firstPixelHue, 1, 255, 255, true);
+    strip.show(); // Update strip with new contents
+    delay(wait);  // Pause for a moment
+  }
+}
 
 /**************** Support SGTL sampling frequency changing */
 #if defined(__IMXRT1062__)  // Teensy 4.x
