@@ -4,7 +4,6 @@
 #include <cmath>
 #include <iostream>
 
-
 //Import audio-related libraries
 #include <Audio.h>
 #include <SD.h>
@@ -34,28 +33,45 @@ union UnderwaterMessage {
 // Declare NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 // GRB color order
-uint32_t red = strip.Color(64, 0, 0, 0);
-uint32_t greenishwhite = strip.Color(0, 64, 0); // g r b w
-uint32_t bluishwhite = strip.Color(0, 0, 64, 0);
+uint32_t red = strip.Color(255, 0, 0, 0);
+uint32_t greenishwhite = strip.Color(0, 255, 0); // g r b w
+uint32_t bluishwhite = strip.Color(0, 0, 255, 0);
+uint32_t cyan = strip.Color(0, 255, 255, 0);
+uint32_t purple = strip.Color(255, 0, 255, 0);
+
+// LED blinky anim stuff
+int counter = 0;
+bool dir = 1;
+long lastLEDUpdateTime = 0;
+long lastButtonCheckTime = 0;
 
 Adafruit_MCP23X17 mcp; // I/O expander
 Adafruit_MAX17048 maxlipo; // Battery monitor
 Adafruit_TPA2016 audioamp = Adafruit_TPA2016(); // Audio amplifier
+
+// Battery monitor stuff
+float lastCellVoltage = 0.0;
+float lastPercentage = 100.0; // Initialize with a full battery percentage
+unsigned long lastBattCheckTime = 0;
+int pctBufPointer = -1;
+#define BATTERY_SAMPLES 5
+float pctBuf[BATTERY_SAMPLES];
 
 // Underwater message array of messages to be sent upon each button press
 UnderwaterMessage UM_array[6];
 
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
-int user_id_current = 1; //WHAT IS OUR ID
-static const char *audio_ids_array[16] = {"ONE.wav", "TWO.wav", "THREE.wav", "FOUR.wav", "FIVE.wav", "SIX.wav", "SEVEN.wav", "EIGHT.wav", "NINE.wav", "TEN.wav", "ELEVEN.wav", "TWELVE.wav", "THIRTEEN.wav", "FOURTEEN.wav", "FIFTEEN.wav", "SIXTEEN.wav"};
+int user_ID = 0;
+static const char *audio_ids_array[16] = {"one.wav", "two.wav", "three.wav", "four.wav", "five.wav", "six.wav", "seven.wav", "eight.wav", "nine.wav", "ten.wav", "eleven.wav", "twelve.wav", "thirteen.wav", "fourteen.wav", "fifteen.wav", "sixteen.wav"};
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
 
 // const unsigned int *audio_ids_array[16] = {AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook, AudioAir, AudioLook};
 
 // Message array, pointers to each message and all audio messages
-static const char *message_array[6] = {"AIR", "ASCEND", "FISH", "LOOK", "CHECK-IN", "SOS"};
-const char *audio_messages_array[6] = {"AIR.wav", "ASCEND.wav", "FISH.wav", "LOOK.wav", "CHECKIN.wav", "SOS.wav"};
+
+static const char *message_array[6] = {"SOS", "AIR", "LOOK AT ME", "MARINE LIFE", "ASCEND", "SOMETHING'S OFF"};
+const char *audio_messages_array[6] = {"sos.wav", "air.wav", "lookatme.wav", "marinelife.wav", "ascend.wav", "somethingoff.wav"};
 
 // Battery percentage pointers
 const char *battery_messages_array[11] = {"0_PC.wav", "10_PC.wav", "20_PC.wav", "30_PC.wav", "40_PC.wav", "50_PC.wav", "60_PC.wav", "70_PC.wav", "80_PC.wav", "90_PC.wav", "100_PC.wav"};
@@ -169,7 +185,7 @@ void setup() {
     strip.setBrightness(LED_BRIGHTNESS);
 
     // LEDs: show that we are alive
-    strip.fill(bluishwhite, 0, 12); // light up entire strip
+    strip.fill(purple, 0, 20); // light up entire strip
     strip.show();
     // keep strip on, then continue with rest of installation
     delay(500); 
@@ -194,7 +210,6 @@ void setup() {
       }
     }
     // Check for ID.txt and read the user ID
-    int user_ID = 0;
     if (SD.exists("ID.txt")) {
       File idFile = SD.open("ID.txt", FILE_READ);
       if (idFile) {
@@ -272,20 +287,41 @@ void setup() {
 
     Serial.println("Done initializing!! Starting now! In receiving default mode!");
     Serial.println("Welcome to NEPTUNE >:)");
-    // Lil rainbow chase effect
-    rainbow(50);
+
+    int dly = 50; // Initial delay
+    float speedFactor = 0.95; // Factor to reduce the delay for smooth speeding up
+
+    for (int cycle = 0; cycle < 6; cycle++) { // Number of cycles
+      for (int i = 0; i < strip.numPixels(); i++) { // Loop through each pixel
+        strip.clear(); // Clear all pixels
+        
+        // Illuminate the current pixel and the next two pixels
+        strip.setPixelColor(i, strip.Color(0, 255, 0));           // Current pixel
+        if (i + 1 < strip.numPixels()) strip.setPixelColor(i + 1, strip.Color(0, 255, 0)); // Next pixel
+        if (i + 2 < strip.numPixels()) strip.setPixelColor(i + 2, strip.Color(0, 255, 0)); // Next-next pixel
+
+        strip.show(); // Update the strip
+        delay(dly);   // Pause for the specified time
+
+        if (i % 6 == 0) {
+          // Gradually decrease delay to speed up
+          dly = max(5, (int)(dly * speedFactor)); // Ensure delay doesn't drop below 5 ms
+        }
+      }
+    }
+    strip.clear();
+    strip.show();
+
+    // Play sound effect
+    playBoneconduct.play("WELCOME.wav");
+    while (playBoneconduct.isPlaying());
+    playBoneconduct.play("user.wav");
+    while (playBoneconduct.isPlaying());
+    playBoneconduct.play(audio_ids_array[user_ID - 1]);
+    while (playBoneconduct.isPlaying());
 }
 
-// LED blinky anim stuff
-int counter = 0;
-bool dir = 1;
-long lastLEDUpdateTime = 0;
-long lastButtonCheckTime = 0;
-
-// Battery monitor stuff
-float lastCellVoltage = 0.0;
-float lastPercentage = 100.0; // Initialize with a full battery percentage
-unsigned long lastBattCheckTime = 0;
+unsigned long lastPlayedBatteryTime = 0;
 
 void loop() {
   if (toneStackPos == 0) {
@@ -299,10 +335,44 @@ void loop() {
     float cellVoltage = maxlipo.cellVoltage(); // Get cell voltage
     if (isnan(cellVoltage)) {
       Serial.println("Failed to read cell voltage, check battery is connected!");
-    } else if (fAbs(cellVoltage - lastCellVoltage) > 0.05) {
+    } else {
       float cellPercent = maxlipo.cellPercent(); // Get battery percentage
       Serial.print("Battery V:");
       Serial.println(cellPercent);
+
+      if (pctBufPointer == -1) { //First sample
+        for (int i=0; i<BATTERY_SAMPLES; i++) {
+          pctBuf[i] = maxlipo.cellVoltage();
+        }
+        pctBufPointer = 1; //Increment pointer
+      } else {
+        pctBuf[pctBufPointer] = maxlipo.cellVoltage();
+      }
+      pctBufPointer++;
+      if (pctBufPointer >= BATTERY_SAMPLES) {
+        pctBufPointer = 0;
+      }
+
+      float totPctBuf = 0.0;
+      for (int i = 0; i < BATTERY_SAMPLES; i++) {
+        totPctBuf += pctBuf[i];
+      }
+
+      float avgPctBuf = totPctBuf / 5.0;
+      float bufDifference = maxlipo.cellVoltage() - avgPctBuf;
+
+      if (millis() - lastPlayedBatteryTime > 3100) {
+        if (bufDifference > 0.05) {
+          Serial.println("Neptune charging activated!");
+          playBoneconduct.play("CHARGING_ACTIVATED.wav");
+          while (playBoneconduct.isPlaying());
+        } else if (bufDifference < -0.05) {
+          Serial.println("Neptune charging deactivated!");
+          playBoneconduct.play("CHARGING_DEACTIVATED.wav");
+          while (playBoneconduct.isPlaying());
+        }
+        lastPlayedBatteryTime = millis();
+      }
 
       // Check if the battery percentage has dropped by at least 10%
       if ((int(cellPercent) / 10) < (int(lastPercentage) / 10)) {
@@ -311,13 +381,13 @@ void loop() {
         Serial.print(percentRange);
         Serial.println("% range.");
 
+        playBoneconduct.play("BATTERY.wav");
+        while (playBoneconduct.isPlaying());
         playBoneconduct.play(battery_messages_array[(int)(percentRange/10)]);
         while (playBoneconduct.isPlaying());
 
         lastPercentage = cellPercent; // Update the last known percentage
       }
-
-      lastCellVoltage = cellVoltage; // Update the last known voltage
     }
   }
 
@@ -340,13 +410,13 @@ void loop() {
     if (millis() - lastToneStart > toneDelayQueue[0]) {
       // Serial.print("ToneQueue: ");
       for (int i=1; i<toneBufferLength; i++) { //Left shift all results by 1
-          Serial.print(toneFreqQueue[i]);
-          Serial.print("Hz@");
-          Serial.print(toneDelayQueue[i]);
+          // Serial.print(toneFreqQueue[i]);
+          // Serial.print("Hz@");
+          // Serial.print(toneDelayQueue[i]);
           toneFreqQueue[i-1] = toneFreqQueue[i];
           toneDelayQueue[i-1] = toneDelayQueue[i];
       }
-      Serial.println();
+      // Serial.println();
       toneStackPos--; //we’ve removed one from the stack
       if (toneStackPos > 0) { //is there something new to start playing?
           if (toneFreqQueue[0] > 0) {
@@ -434,20 +504,18 @@ void loop() {
           Serial.print((recvdMessage.data >> i) & 1);
         }
 
-        strip.fill(red, 0, recvdMessage.id+1);
-        strip.show();
-        lastLEDUpdateTime = millis() + 1000;
-
         if (validUnderwaterMessage(recvdMessage)) {
+          txrxAnimate(0); //ANIMATE LEDs in receive direction
+          lastLEDUpdateTime = millis() + 1000;
           // Play audio corresponding to usert
           Serial.print(" --- USER: ");
           Serial.print(user_ids_array[recvdMessage.id]);
 
-          playBoneconduct.play("USER.wav");
+          playBoneconduct.play("user.wav");
           while (playBoneconduct.isPlaying());
           playBoneconduct.play(audio_ids_array[recvdMessage.id]);
           while (playBoneconduct.isPlaying());
-          playBoneconduct.play("SAID.wav");
+          playBoneconduct.play("said.wav");
           while (playBoneconduct.isPlaying());
 
           for (int c = 0; c < 6; c++) {
@@ -474,13 +542,13 @@ void loop() {
         Serial.println(b);
         strip.clear();
 
-        // LED CONFIRMATION
-        strip.fill(red, 0, b+1);
-        strip.show();
+        txrxAnimate(1); //ANIMATE LEDs in transmit direction
         lastLEDUpdateTime = millis() + 1000;
 
         // BONE CONDUCTION CONFIRMATION
-        playBoneconduct.play("YOUSAID.wav");
+        playBoneconduct.play("you.wav");
+        while (playBoneconduct.isPlaying());
+        playBoneconduct.play("said.wav");
         while (playBoneconduct.isPlaying());
         playBoneconduct.play(audio_messages_array[b]); 
 
@@ -493,6 +561,30 @@ void loop() {
         }
         Serial.println(); // New line after printing bits
       }
+    }
+  }
+}
+
+void txrxAnimate(bool dir) {
+  int leftArr[9] = {1, 2, 3, 4, 5, 19, 18, 17, 16};
+  int rightArr[9] = {1, 0, 11, 10, 9, 12, 13, 14, 15};
+
+  strip.clear();
+  strip.show();
+
+  if (dir) { // Forward direction
+    for (int i = 0; i < 9; i++) {
+      strip.setPixelColor(leftArr[i], cyan);
+      strip.setPixelColor(rightArr[i], cyan);
+      strip.show();
+      delay(75); // Adjust delay for animation speed
+    }
+  } else { // Reverse direction
+    for (int i = 8; i >= 0; i--) {
+      strip.setPixelColor(leftArr[i], cyan);
+      strip.setPixelColor(rightArr[i], cyan);
+      strip.show();
+      delay(75); // Adjust delay for animation speed
     }
   }
 }
