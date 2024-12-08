@@ -116,9 +116,9 @@ uint16_t samplingPointer = 0; //How many samples have we seen?
 bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
 #define FFT_BIN_WIDTH 43.0664
-#define MESSAGE_START_FREQ 17500 // Hz (1/sec)
+#define MESSAGE_START_FREQ 12500 // Hz (1/sec)
 #define MESSAGE_0_FREQ 15000 // Hz
-#define MESSAGE_1_FREQ 12500 // Hz
+#define MESSAGE_1_FREQ 17500 // Hz
 #define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
 #define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
 #define MIN_VALID_AMP 0.05
@@ -267,10 +267,11 @@ void setup() {
     // Get BC transducer amp up and running 
     if (!audioamp.begin()) {
       Serial.println("[Error] TPA2016 audio amp failed to initialize");
-      initializationError(5);
+      // initializationError(5);
+    } else {
+      audioamp.setGain(30);
+      Serial.println("[OK] TPA2016 initialized successfully, gain set");
     }
-    audioamp.setGain(30);
-    Serial.println("[OK] TPA2016 initialized successfully, gain set");
 
     // Get audio shield up and running
     AudioMemory(500);
@@ -521,7 +522,7 @@ void loop() {
           //UNCOMMENT TO USE PACKET ID
           // playBoneconduct.play(audio_ids_array[recvdMessage.id]);
           // HARDCODED ID
-          playBoneconduct.play(audio_ids_array[other_user_ID]);
+          playBoneconduct.play(audio_ids_array[other_user_ID-1]);
           while (playBoneconduct.isPlaying());
           playBoneconduct.play("said.wav");
           while (playBoneconduct.isPlaying());
