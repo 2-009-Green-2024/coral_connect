@@ -62,8 +62,8 @@ UnderwaterMessage UM_array[6];
 
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
-int user_ID = 0;
-int other_user_ID = 1;
+int user_ID = 1;
+int other_user_ID = 2;
 static const char *audio_ids_array[16] = {"one.wav", "two.wav", "three.wav", "four.wav", "five.wav", "six.wav", "seven.wav", "eight.wav", "nine.wav", "ten.wav", "eleven.wav", "twelve.wav", "thirteen.wav", "fourteen.wav", "fifteen.wav", "sixteen.wav"};
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
 
