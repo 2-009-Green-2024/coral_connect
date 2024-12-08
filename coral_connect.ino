@@ -63,6 +63,7 @@ UnderwaterMessage UM_array[6];
 // IDS: how we identify one device from another
 // Pointers to user ID as string, and audio ID files
 int user_ID = 0;
+int other_user_ID = 1;
 static const char *audio_ids_array[16] = {"one.wav", "two.wav", "three.wav", "four.wav", "five.wav", "six.wav", "seven.wav", "eight.wav", "nine.wav", "ten.wav", "eleven.wav", "twelve.wav", "thirteen.wav", "fourteen.wav", "fifteen.wav", "sixteen.wav"};
 static const char *user_ids_array[16] = {"USER ONE", "USER TWO", "USER THREE", "USER FOUR", "USER FIVE", "USER SIX", "USER SEVEN", "USER EIGHT", "USER NINE", "USER TEN", "USER ELEVEN", "USER TWELVE", "USER THIRTEEN", "USER FOURTEEN", "USER FIFTEEN", "USER SIXTEEN"};
 
@@ -89,7 +90,6 @@ const uint32_t sampleRate = 44100;
 
 /************** AUDIO OUTPUT CHAIN (BONE CONDUCTION OUT) */
 AudioPlaySdWav          playBoneconduct;       //xy=87,384
-// AudioPlayMemory          playBoneconduct;       //xy=87,384
 AudioAmplifier           outputAmp;           //xy=309,351
 AudioOutputI2S           audioOutput;           //xy=573,377
 AudioConnection          patchCord1(playBoneconduct, outputAmp);
@@ -116,9 +116,9 @@ uint16_t samplingPointer = 0; //How many samples have we seen?
 bool bitBuffer[MESSAGE_LENGTH]; // Message sample buffer (1 or 0)
 int bitPointer = 0;
 #define FFT_BIN_WIDTH 43.0664
-#define MESSAGE_START_FREQ 20000 // Hz (1/sec)
-#define MESSAGE_0_FREQ 17500 // Hz
-#define MESSAGE_1_FREQ 15000 // Hz
+#define MESSAGE_START_FREQ 17500 // Hz (1/sec)
+#define MESSAGE_0_FREQ 15000 // Hz
+#define MESSAGE_1_FREQ 12500 // Hz
 #define MESSAGE_LOWPASS_CUTOFF_FREQ 10000
 #define FFT_BIN_CUTOFF (int)(MESSAGE_LOWPASS_CUTOFF_FREQ/FFT_BIN_WIDTH) //Lowpass cutoff
 #define MIN_VALID_AMP 0.05
@@ -216,6 +216,11 @@ void setup() {
         String idContent = idFile.readStringUntil('\n'); // Read the number from the file
         idContent.trim(); // Remove any whitespace or newlines
         user_ID = idContent.toInt(); // Convert to an integer
+        if (user_ID == 1) {
+          other_user_ID = 2;
+        } else {
+          other_user_ID = 1;
+        }
         Serial.print("[OK] User ID set to: ");
         Serial.println(user_ID);
         idFile.close();
@@ -460,11 +465,11 @@ void loop() {
     
     // We get valid message start tone!
     if (curReceivingState == LISTENING) {
-      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)FFT_BIN_WIDTH, BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (validAmplitude(maxBinAmp) && freqMatchesBounds((double)binNumber * (double)FFT_BIN_WIDTH, BOUNDS_FREQ, MESSAGE_START_FREQ) && toneStackPos == 0) {
         transitionReceivingState(CHECK_START); // Check start is actively checking if we've gotten start frequencies before recording the message 
       }
     } else if (curReceivingState == CHECK_START && millis() - lastBitChange >= MESSAGE_BIT_DELAY) { // Gotten all start samples
-      if (isSampleBufferValid() && freqMatchesBounds(sampleBufferMax(), BOUNDS_FREQ, MESSAGE_START_FREQ)) {
+      if (isSampleBufferValid() && freqMatchesBounds(sampleBufferMax(), BOUNDS_FREQ, MESSAGE_START_FREQ) && toneStackPos == 0) {
         Serial.println("SAW VALID MESSAGE START FREQ!");
         transitionReceivingState(MESSAGE_ACTIVE); //Currently receiving valid message
       } else { // If buffer is not valid OR freq doesn’t match start
@@ -513,7 +518,10 @@ void loop() {
 
           playBoneconduct.play("user.wav");
           while (playBoneconduct.isPlaying());
-          playBoneconduct.play(audio_ids_array[recvdMessage.id]);
+          //UNCOMMENT TO USE PACKET ID
+          // playBoneconduct.play(audio_ids_array[recvdMessage.id]);
+          // HARDCODED ID
+          playBoneconduct.play(audio_ids_array[other_user_ID]);
           while (playBoneconduct.isPlaying());
           playBoneconduct.play("said.wav");
           while (playBoneconduct.isPlaying());
