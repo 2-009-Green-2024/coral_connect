@@ -1,0 +1,7750 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 24 24 571 818
+%%Title: Enscript Output
+%%For: Aaron Becker
+%%Creator: GNU Enscript 1.6.6
+%%CreationDate: Wed Dec 11 15:39:27 2024
+%%Orientation: Portrait
+%%Pages: (atend)
+%%DocumentMedia: A4 595 842 0 () ()
+%%DocumentNeededResources: (atend)
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset Enscript-Prolog 1.6 6
+%
+% Procedures.
+%
+
+/_S {	% save current state
+  /_s save def
+} def
+/_R {	% restore from saved state
+  _s restore
+} def
+
+/S {	% showpage protecting gstate
+  gsave
+  showpage
+  grestore
+} bind def
+
+/MF {	% fontname newfontname -> -	make a new encoded font
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  % insert only valid encoding vectors
+  encoding_vector length 256 eq {
+    newfont /Encoding encoding_vector put
+  } if
+
+  newfontname newfont definefont pop
+} def
+
+/MF_PS { % fontname newfontname -> -	make a new font preserving its enc
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  newfontname newfont definefont pop
+} def
+
+/SF { % fontname width height -> -	set a new font
+  /height exch def
+  /width exch def
+
+  findfont
+  [width 0 0 height 0 0] makefont setfont
+} def
+
+/SUF { % fontname width height -> -	set a new user font
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF
+  /F-gs-user-font width height SF
+} def
+
+/SUF_PS { % fontname width height -> -	set a new user font preserving its enc
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF_PS
+  /F-gs-user-font width height SF
+} def
+
+/M {moveto} bind def
+/s {show} bind def
+
+/Box {	% x y w h -> -			define box path
+  /d_h exch def /d_w exch def /d_y exch def /d_x exch def
+  d_x d_y  moveto
+  d_w 0 rlineto
+  0 d_h rlineto
+  d_w neg 0 rlineto
+  closepath
+} def
+
+/bgs {	% x y height blskip gray str -> -	show string with bg color
+  /str exch def
+  /gray exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    gray setgray
+    fill
+  grestore
+  x y M str s
+} def
+
+/bgcs { % x y height blskip red green blue str -> -  show string with bg color
+  /str exch def
+  /blue exch def
+  /green exch def
+  /red exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    red green blue setrgbcolor
+    fill
+  grestore
+  x y M str s
+} def
+
+% Highlight bars.
+/highlight_bars {	% nlines lineheight output_y_margin gray -> -
+  gsave
+    setgray
+    /ymarg exch def
+    /lineheight exch def
+    /nlines exch def
+
+    % This 2 is just a magic number to sync highlight lines to text.
+    0 d_header_y ymarg sub 2 sub translate
+
+    /cw d_output_w cols div def
+    /nrows d_output_h ymarg 2 mul sub lineheight div cvi def
+
+    % for each column
+    0 1 cols 1 sub {
+      cw mul /xp exch def
+
+      % for each rows
+      0 1 nrows 1 sub {
+        /rn exch def
+        rn lineheight mul neg /yp exch def
+        rn nlines idiv 2 mod 0 eq {
+	  % Draw highlight bar.  4 is just a magic indentation.
+	  xp 4 add yp cw 8 sub lineheight neg Box fill
+	} if
+      } for
+    } for
+
+  grestore
+} def
+
+% Line highlight bar.
+/line_highlight {	% x y width height gray -> -
+  gsave
+    /gray exch def
+    Box gray setgray fill
+  grestore
+} def
+
+% Column separator lines.
+/column_lines {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h translate
+    /cw d_output_w cols div def
+    1 1 cols 1 sub {
+      cw mul 0 moveto
+      0 d_output_h rlineto stroke
+    } for
+  grestore
+} def
+
+% Column borders.
+/column_borders {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h moveto
+    0 d_output_h rlineto
+    d_output_w 0 rlineto
+    0 d_output_h neg rlineto
+    closepath stroke
+  grestore
+} def
+
+% Do the actual underlay drawing
+/draw_underlay {
+  ul_style 0 eq {
+    ul_str true charpath stroke
+  } {
+    ul_str show
+  } ifelse
+} def
+
+% Underlay
+/underlay {	% - -> -
+  gsave
+    0 d_page_h translate
+    d_page_h neg d_page_w atan rotate
+
+    ul_gray setgray
+    ul_font setfont
+    /dw d_page_h dup mul d_page_w dup mul add sqrt def
+    ul_str stringwidth pop dw exch sub 2 div ul_h_ptsize -2 div moveto
+    draw_underlay
+  grestore
+} def
+
+/user_underlay {	% - -> -
+  gsave
+    ul_x ul_y translate
+    ul_angle rotate
+    ul_gray setgray
+    ul_font setfont
+    0 0 ul_h_ptsize 2 div sub moveto
+    draw_underlay
+  grestore
+} def
+
+% Page prefeed
+/page_prefeed {		% bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} def
+
+% Wrapped line markers
+/wrapped_line_mark {	% x y charwith charheight type -> -
+  /type exch def
+  /h exch def
+  /w exch def
+  /y exch def
+  /x exch def
+
+  type 2 eq {
+    % Black boxes (like TeX does)
+    gsave
+      0 setlinewidth
+      x w 4 div add y M
+      0 h rlineto w 2 div 0 rlineto 0 h neg rlineto
+      closepath fill
+    grestore
+  } {
+    type 3 eq {
+      % Small arrows
+      gsave
+        .2 setlinewidth
+        x w 2 div add y h 2 div add M
+        w 4 div 0 rlineto
+        x w 4 div add y lineto stroke
+
+        x w 4 div add w 8 div add y h 4 div add M
+        x w 4 div add y lineto
+	w 4 div h 8 div rlineto stroke
+      grestore
+    } {
+      % do nothing
+    } ifelse
+  } ifelse
+} def
+
+% EPSF import.
+
+/BeginEPSF {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack
+  userdict begin
+  /showpage { } def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+
+/EndEPSF {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+%%EndResource
+%%BeginResource: procset Enscript-Encoding-88591 1.6 6
+/encoding_vector [
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclam       	/quotedbl     	/numbersign   	
+/dollar       	/percent      	/ampersand    	/quoteright   	
+/parenleft    	/parenright   	/asterisk     	/plus         	
+/comma        	/hyphen       	/period       	/slash        	
+/zero         	/one          	/two          	/three        	
+/four         	/five         	/six          	/seven        	
+/eight        	/nine         	/colon        	/semicolon    	
+/less         	/equal        	/greater      	/question     	
+/at           	/A            	/B            	/C            	
+/D            	/E            	/F            	/G            	
+/H            	/I            	/J            	/K            	
+/L            	/M            	/N            	/O            	
+/P            	/Q            	/R            	/S            	
+/T            	/U            	/V            	/W            	
+/X            	/Y            	/Z            	/bracketleft  	
+/backslash    	/bracketright 	/asciicircum  	/underscore   	
+/quoteleft    	/a            	/b            	/c            	
+/d            	/e            	/f            	/g            	
+/h            	/i            	/j            	/k            	
+/l            	/m            	/n            	/o            	
+/p            	/q            	/r            	/s            	
+/t            	/u            	/v            	/w            	
+/x            	/y            	/z            	/braceleft    	
+/bar          	/braceright   	/tilde        	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclamdown   	/cent         	/sterling     	
+/currency     	/yen          	/brokenbar    	/section      	
+/dieresis     	/copyright    	/ordfeminine  	/guillemotleft	
+/logicalnot   	/hyphen       	/registered   	/macron       	
+/degree       	/plusminus    	/twosuperior  	/threesuperior	
+/acute        	/mu           	/paragraph    	/bullet       	
+/cedilla      	/onesuperior  	/ordmasculine 	/guillemotright	
+/onequarter   	/onehalf      	/threequarters	/questiondown 	
+/Agrave       	/Aacute       	/Acircumflex  	/Atilde       	
+/Adieresis    	/Aring        	/AE           	/Ccedilla     	
+/Egrave       	/Eacute       	/Ecircumflex  	/Edieresis    	
+/Igrave       	/Iacute       	/Icircumflex  	/Idieresis    	
+/Eth          	/Ntilde       	/Ograve       	/Oacute       	
+/Ocircumflex  	/Otilde       	/Odieresis    	/multiply     	
+/Oslash       	/Ugrave       	/Uacute       	/Ucircumflex  	
+/Udieresis    	/Yacute       	/Thorn        	/germandbls   	
+/agrave       	/aacute       	/acircumflex  	/atilde       	
+/adieresis    	/aring        	/ae           	/ccedilla     	
+/egrave       	/eacute       	/ecircumflex  	/edieresis    	
+/igrave       	/iacute       	/icircumflex  	/idieresis    	
+/eth          	/ntilde       	/ograve       	/oacute       	
+/ocircumflex  	/otilde       	/odieresis    	/divide       	
+/oslash       	/ugrave       	/uacute       	/ucircumflex  	
+/udieresis    	/yacute       	/thorn        	/ydieresis    	
+] def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier
+/HFpt_w 10 def
+/HFpt_h 10 def
+/Courier-Bold /HF-gs-font MF
+/HF /HF-gs-font findfont [HFpt_w 0 0 HFpt_h 0 0] makefont def
+/Courier /F-gs-font MF
+/F-gs-font 10 10 SF
+/#copies 1 def
+% Pagedevice definitions:
+gs_languagelevel 1 gt {
+  <<
+    /PageSize [595 842] 
+  >> setpagedevice
+} if
+%%BeginResource: procset Enscript-Header-simple 1.6 6
+
+/do_header {	% print default simple header
+  gsave
+    d_header_x d_header_y HFpt_h 3 div add translate
+
+    HF setfont
+    user_header_p {
+      5 0 moveto user_header_left_str show
+
+      d_header_w user_header_center_str stringwidth pop sub 2 div
+      0 moveto user_header_center_str show
+
+      d_header_w user_header_right_str stringwidth pop sub 5 sub
+      0 moveto user_header_right_str show
+    } {
+      5 0 moveto fname show
+      45 0 rmoveto fmodstr show
+      45 0 rmoveto pagenumstr show
+    } ifelse
+
+  grestore
+} def
+%%EndResource
+/d_page_w 547 def
+/d_page_h 794 def
+/d_header_x 0 def
+/d_header_y 779 def
+/d_header_w 547 def
+/d_header_h 15 def
+/d_footer_x 0 def
+/d_footer_y 0 def
+/d_footer_w 547 def
+/d_footer_h 0 def
+/d_output_w 547 def
+/d_output_h 779 def
+/cols 2 def
+%%EndSetup
+%%Page: (1) 1
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 1 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+30 766 M (1:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 766 M
+(// Import default libraries) s
+/F-gs-font 10 10 SF
+30 755 M (2:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 755 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 755 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 755 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 755 M
+(<Arduino.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+30 744 M (3:) s
+48 744 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 744 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 744 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 744 M
+(<elapsedMillis.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+30 733 M (4:) s
+48 733 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 733 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 733 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 733 M
+(<cmath>) s
+/F-gs-font 10 10 SF
+0 setgray
+30 722 M (5:) s
+48 722 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 722 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 722 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 722 M
+(<iostream>) s
+/F-gs-font 10 10 SF
+0 setgray
+30 711 M (6:) s
+30 700 M (7:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 700 M
+(//Import audio-related libraries) s
+/F-gs-font 10 10 SF
+30 689 M (8:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 689 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 689 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 689 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 689 M
+(<Audio.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+30 678 M (9:) s
+48 678 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 678 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 678 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 678 M
+(<SD.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+24 667 M (10:) s
+48 667 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 667 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 667 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 667 M
+(<SPI.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+24 656 M (11:) s
+48 656 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 656 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 656 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 656 M
+(<Wire.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+24 645 M (12:) s
+24 634 M (13:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 634 M
+(// Import other device libraries) s
+/F-gs-font 10 10 SF
+24 623 M (14:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 623 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 623 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 623 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 623 M
+("Adafruit_MAX1704X.h") s
+/F-gs-font 10 10 SF
+0 setgray
+228 623 M
+( // Ba) s
+24 612 M (15:) s
+48 612 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 612 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 612 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 612 M
+(<Adafruit_MCP23X17.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+228 612 M
+( // IO) s
+24 601 M (16:) s
+48 601 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 601 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 601 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 601 M
+(<Adafruit_NeoPixel.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+228 601 M
+( // LE) s
+24 590 M (17:) s
+48 590 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 590 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 590 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 590 M
+(<Adafruit_TPA2016.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+222 590 M
+( // BC ) s
+24 579 M (18:) s
+48 579 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 579 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+96 579 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+102 579 M
+("pindefs.h") s
+/F-gs-font 10 10 SF
+0 setgray
+168 579 M
+( // Pin definiti) s
+24 568 M (19:) s
+24 557 M (20:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 557 M
+(/************ MESSAGE PACKETS */) s
+/F-gs-font 10 10 SF
+0 setgray
+24 546 M (21:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 546 M
+(union) s
+/F-gs-font 10 10 SF
+0 setgray
+78 546 M
+( UnderwaterMessage {) s
+24 535 M (22:) s
+48 535 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 535 M
+(struct) s
+/F-gs-font 10 10 SF
+0 setgray
+108 535 M
+( {) s
+24 524 M (23:) s
+48 524 M
+(        uint8_t msg : 3; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+198 524 M
+(// 8 bits f) s
+/F-gs-font 10 10 SF
+24 513 M (24:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 513 M
+(        uint8_t id : 4;  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+198 513 M
+(// 8 bits f) s
+/F-gs-font 10 10 SF
+24 502 M (25:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 502 M
+(    };) s
+24 491 M (26:) s
+48 491 M
+(    uint8_t data; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+156 491 M
+(// 16 bits total \() s
+/F-gs-font 10 10 SF
+24 480 M (27:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+24 469 M (28:) s
+48 469 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 469 M
+(static) s
+/F-gs-font 10 10 SF
+0 setgray
+108 469 M
+( constexpr uint8_t size = ) s
+24 458 M (29:) s
+48 458 M
+(};) s
+24 447 M (30:) s
+24 436 M (31:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 436 M
+(/******* ADDITIONAL DEVICE SETUP */) s
+/F-gs-font 10 10 SF
+0 setgray
+24 425 M (32:) s
+24 414 M (33:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 414 M
+(// Declare NeoPixel strip object:) s
+/F-gs-font 10 10 SF
+24 403 M (34:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 403 M
+(Adafruit_NeoPixel ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+156 403 M
+(strip) s
+/F-gs-font 10 10 SF
+0 setgray
+186 403 M
+(\(LED_COUNT, L) s
+24 392 M (35:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 392 M
+(// GRB color order) s
+/F-gs-font 10 10 SF
+24 381 M (36:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 381 M
+(uint32_t red = strip.Color\(255, 0, 0) s
+24 370 M (37:) s
+48 370 M
+(uint32_t greenishwhite = strip.Color) s
+24 359 M (38:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 359 M
+(uint32_t bluishwhite = strip.Color\(0) s
+24 348 M (39:) s
+48 348 M
+(uint32_t cyan = strip.Color\(0, 255, ) s
+24 337 M (40:) s
+48 337 M
+(uint32_t purple = strip.Color\(255, 0) s
+24 326 M (41:) s
+24 315 M (42:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 315 M
+(// LED blinky anim stuff) s
+/F-gs-font 10 10 SF
+24 304 M (43:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 304 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+66 304 M
+( counter = 0;) s
+24 293 M (44:) s
+48 293 M
+(bool dir = 1;) s
+24 282 M (45:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 282 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+72 282 M
+( lastLEDUpdateTime = 0;) s
+24 271 M (46:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 271 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+72 271 M
+( lastButtonCheckTime = 0;) s
+24 260 M (47:) s
+24 249 M (48:) s
+48 249 M
+(Adafruit_MCP23X17 mcp; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+186 249 M
+(// I/O expand) s
+/F-gs-font 10 10 SF
+24 238 M (49:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 238 M
+(Adafruit_MAX17048 maxlipo; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+210 238 M
+(// Batter) s
+/F-gs-font 10 10 SF
+24 227 M (50:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 227 M
+(Adafruit_TPA2016 audioamp = Adafruit) s
+24 216 M (51:) s
+/F-gs-font 10 10 SF
+0 setgray
+24 205 M (52:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 205 M
+(// Battery monitor stuff) s
+/F-gs-font 10 10 SF
+24 194 M (53:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 194 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+78 194 M
+( lastCellVoltage = 0.0;) s
+24 183 M (54:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 183 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+78 183 M
+( lastPercentage = 100.0; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+228 183 M
+(// Ini) s
+/F-gs-font 10 10 SF
+24 172 M (55:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 172 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+96 172 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 172 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+126 172 M
+( lastBattCheckTime = 0;) s
+24 161 M (56:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 161 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+66 161 M
+( pctBufPointer = -1;) s
+24 150 M (57:) s
+48 150 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 150 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+90 150 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+96 150 M
+(BATTERY_SAMPLES) s
+/F-gs-font 10 10 SF
+0 setgray
+186 150 M
+( 5) s
+24 139 M (58:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 139 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+78 139 M
+( pctBuf[BATTERY_SAMPLES];) s
+24 128 M (59:) s
+24 117 M (60:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 117 M
+(// Underwater message array of messa) s
+/F-gs-font 10 10 SF
+24 106 M (61:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 106 M
+(UnderwaterMessage UM_array[6];) s
+24 95 M (62:) s
+24 84 M (63:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 84 M
+(// IDS: how we identify one device f) s
+/F-gs-font 10 10 SF
+24 73 M (64:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 73 M
+(// Pointers to user ID as string, an) s
+/F-gs-font 10 10 SF
+24 62 M (65:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 62 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+66 62 M
+( user_ID = 1;) s
+24 51 M (66:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 51 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+66 51 M
+( other_user_ID = 2;) s
+24 40 M (67:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 40 M
+(static) s
+/F-gs-font 10 10 SF
+0 setgray
+84 40 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+90 40 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+120 40 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+126 40 M
+(char) s
+/F-gs-font 10 10 SF
+0 setgray
+150 40 M
+( *audio_ids_array[1) s
+24 29 M (68:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 29 M
+(static) s
+/F-gs-font 10 10 SF
+0 setgray
+84 29 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+90 29 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+120 29 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+126 29 M
+(char) s
+/F-gs-font 10 10 SF
+0 setgray
+150 29 M
+( *user_ids_array[16) s
+24 18 M (69:) s
+24 7 M (70:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 7 M
+(// const unsigned int *audio_ids_arr) s
+/F-gs-font 10 10 SF
+297.5 766 M (71:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+297.5 755 M (72:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 755 M
+(// Message array, pointers to each m) s
+/F-gs-font 10 10 SF
+297.5 744 M (73:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+297.5 733 M (74:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 733 M
+(static) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 733 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+363.5 733 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 733 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+399.5 733 M
+(char) s
+/F-gs-font 10 10 SF
+0 setgray
+423.5 733 M
+( *message_array[6] ) s
+297.5 722 M (75:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 722 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 722 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 722 M
+(char) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 722 M
+( *audio_messages_array[6] ) s
+297.5 711 M (76:) s
+297.5 700 M (77:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 700 M
+(// Battery percentage pointers) s
+/F-gs-font 10 10 SF
+297.5 689 M (78:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 689 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 689 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 689 M
+(char) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 689 M
+( *battery_messages_array[1) s
+297.5 678 M (79:) s
+297.5 667 M (80:) s
+297.5 656 M (81:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 656 M
+(/************* AUDIO SHIELD / PIPELI) s
+/F-gs-font 10 10 SF
+297.5 645 M (82:) s
+/Courier-Oblique 10 10 SUF
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 645 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 645 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 645 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 645 M
+( micInput = AUDIO_INPUT_MIC) s
+297.5 634 M (83:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 634 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 634 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 634 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 634 M
+( chipSelect = 10; ) s
+297.5 623 M (84:) s
+297.5 612 M (85:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 612 M
+(// SELECT SAMPLE RATE) s
+/F-gs-font 10 10 SF
+297.5 601 M (86:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 601 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 601 M
+( uint32_t sampleRate = 44100;) s
+297.5 590 M (87:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 590 M
+(// const uint32_t sampleRate = 96000) s
+/F-gs-font 10 10 SF
+297.5 579 M (88:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 579 M
+(// const uint32_t sampleRate = 19200) s
+/F-gs-font 10 10 SF
+297.5 568 M (89:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 568 M
+(//const uint32_t sampleRate = 234000) s
+/F-gs-font 10 10 SF
+297.5 557 M (90:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+297.5 546 M (91:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 546 M
+(/************** AUDIO OUTPUT CHAIN \() s
+/F-gs-font 10 10 SF
+297.5 535 M (92:) s
+/Courier-Oblique 10 10 SUF
+321.5 535 M
+(AudioPlaySdWav          playBonecond) s
+/F-gs-font 10 10 SF
+297.5 524 M (93:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 524 M
+(AudioAmplifier           outputAmp; ) s
+297.5 513 M (94:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 513 M
+(AudioOutputI2S           audioOutput) s
+297.5 502 M (95:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 502 M
+(AudioConnection          ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+471.5 502 M
+(patchCord1) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 502 M
+(\() s
+297.5 491 M (96:) s
+321.5 491 M
+(AudioConnection          ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+471.5 491 M
+(patchCord2) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 491 M
+(\() s
+297.5 480 M (97:) s
+297.5 469 M (98:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 469 M
+(/*************** AUDIO INPUT CHAIN \() s
+/F-gs-font 10 10 SF
+297.5 458 M (99:) s
+/Courier-Oblique 10 10 SUF
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 458 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 458 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 458 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 458 M
+( myInput = AUDIO_INPUT_MIC;) s
+291.5 447 M (100:) s
+321.5 447 M
+(AudioControlSGTL5000    audioShield;) s
+291.5 436 M (101:) s
+321.5 436 M
+(AudioInputI2S            audioInput;) s
+291.5 425 M (102:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 425 M
+(AudioAmplifier           inputAmp;  ) s
+291.5 414 M (103:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 414 M
+(AudioAnalyzeFFT1024      inputFFT;  ) s
+291.5 403 M (104:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 403 M
+(AudioConnection          ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+471.5 403 M
+(patchCord3) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 403 M
+(\() s
+291.5 392 M (105:) s
+321.5 392 M
+(AudioConnection          ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+471.5 392 M
+(patchCord4) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 392 M
+(\() s
+291.5 381 M (106:) s
+291.5 370 M (107:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 370 M
+(/************** SAMPLE BUFFER LOGIC ) s
+/F-gs-font 10 10 SF
+291.5 359 M (108:) s
+/Courier-Oblique 10 10 SUF
+321.5 359 M
+(Each bin is numbered 0-1023 and has ) s
+/F-gs-font 10 10 SF
+291.5 348 M (109:) s
+/Courier-Oblique 10 10 SUF
+321.5 348 M
+(SamplingBuffer is a time-valued arra) s
+/F-gs-font 10 10 SF
+291.5 337 M (110:) s
+/Courier-Oblique 10 10 SUF
+321.5 337 M
+(*/) s
+/F-gs-font 10 10 SF
+0 setgray
+291.5 326 M (111:) s
+321.5 326 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 326 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 326 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 326 M
+(MESSAGE_BIT_DELAY) s
+/F-gs-font 10 10 SF
+0 setgray
+471.5 326 M
+( 250 // ms ) s
+291.5 315 M (112:) s
+321.5 315 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 315 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 315 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 315 M
+(NUM_SAMPLES) s
+/F-gs-font 10 10 SF
+0 setgray
+435.5 315 M
+( \(\(int\)\(\(\(MESSAGE) s
+291.5 304 M (113:) s
+321.5 304 M
+(int16_t samplingBuffer[NUM_SAMPLES];) s
+291.5 293 M (114:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 293 M
+(uint16_t samplingPointer = 0; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+501.5 293 M
+(//How ) s
+/F-gs-font 10 10 SF
+291.5 282 M (115:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 282 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 282 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 282 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 282 M
+(MESSAGE_LENGTH) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 282 M
+( UnderwaterMes) s
+291.5 271 M (116:) s
+321.5 271 M
+(bool bitBuffer[MESSAGE_LENGTH]; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+513.5 271 M
+(// M) s
+/F-gs-font 10 10 SF
+291.5 260 M (117:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 260 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+339.5 260 M
+( bitPointer = 0;) s
+291.5 249 M (118:) s
+321.5 249 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 249 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 249 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 249 M
+(FFT_BIN_WIDTH) s
+/F-gs-font 10 10 SF
+0 setgray
+447.5 249 M
+( 43.0664) s
+291.5 238 M (119:) s
+321.5 238 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 238 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 238 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 238 M
+(MESSAGE_START_FREQ) s
+/F-gs-font 10 10 SF
+0 setgray
+477.5 238 M
+( 12500 // ) s
+291.5 227 M (120:) s
+321.5 227 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 227 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 227 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 227 M
+(MESSAGE_0_FREQ) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 227 M
+( 15000 // Hz) s
+291.5 216 M (121:) s
+321.5 216 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 216 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 216 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 216 M
+(MESSAGE_1_FREQ) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 216 M
+( 17500 // Hz) s
+291.5 205 M (122:) s
+321.5 205 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 205 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 205 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 205 M
+(MESSAGE_LOWPASS_CUTOFF_FREQ) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 205 M
+( ) s
+291.5 194 M (123:) s
+321.5 194 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 194 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 194 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 194 M
+(FFT_BIN_CUTOFF) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 194 M
+( \(int\)\(MESSAGE) s
+291.5 183 M (124:) s
+321.5 183 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 183 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 183 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 183 M
+(MIN_VALID_AMP) s
+/F-gs-font 10 10 SF
+0 setgray
+447.5 183 M
+( 0.05) s
+291.5 172 M (125:) s
+321.5 172 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 172 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 172 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 172 M
+(MAX_VALID_AMP) s
+/F-gs-font 10 10 SF
+0 setgray
+447.5 172 M
+( 1.5) s
+291.5 161 M (126:) s
+321.5 161 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 161 M
+(define) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 161 M
+( ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+369.5 161 M
+(BOUNDS_FREQ) s
+/F-gs-font 10 10 SF
+0 setgray
+435.5 161 M
+( 1500) s
+291.5 150 M (127:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 150 M
+(typedef) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 150 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+369.5 150 M
+(enum) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 150 M
+( {) s
+291.5 139 M (128:) s
+321.5 139 M
+(  LISTENING, ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+399.5 139 M
+(//Waiting for start fre) s
+/F-gs-font 10 10 SF
+291.5 128 M (129:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 128 M
+(  CHECK_START,) s
+291.5 117 M (130:) s
+321.5 117 M
+(  MESSAGE_ACTIVE ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+423.5 117 M
+(//Currently receivi) s
+/F-gs-font 10 10 SF
+291.5 106 M (131:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 106 M
+(} RECEIVING_STATE;) s
+291.5 95 M (132:) s
+291.5 84 M (133:) s
+321.5 84 M
+(RECEIVING_STATE curReceivingState = ) s
+291.5 73 M (134:) s
+321.5 73 M
+(bool sampling = 0; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+435.5 73 M
+(// Are we current) s
+/F-gs-font 10 10 SF
+291.5 62 M (135:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+291.5 51 M (136:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 51 M
+(/*************** TRANSMITTING LOGIC ) s
+/F-gs-font 10 10 SF
+291.5 40 M (137:) s
+/Courier-Oblique 10 10 SUF
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 40 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 40 M
+( byte toneBufferLength = 10*MES) s
+291.5 29 M (138:) s
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 29 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+339.5 29 M
+( toneFreqQueue[toneBufferLength];) s
+291.5 18 M (139:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 18 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 18 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+375.5 18 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 18 M
+( toneDelayQueue[toneBuf) s
+291.5 7 M (140:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 7 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 7 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+375.5 7 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 7 M
+( lastToneStart = 0;) s
+_R
+S
+%%Page: (2) 2
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 2 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+18 766 M (141:) s
+48 766 M
+(byte toneStackPos = 0;) s
+18 755 M (142:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 755 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+96 755 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 755 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+126 755 M
+( lastBitChange = 0;) s
+18 744 M (143:) s
+18 733 M (144:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 733 M
+(/*************** AUDIO LOGIC \(QUEUE\)) s
+/F-gs-font 10 10 SF
+18 722 M (145:) s
+/Courier-Oblique 10 10 SUF
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 722 M
+(// const byte audioBufferLength = 10) s
+/F-gs-font 10 10 SF
+18 711 M (146:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 711 M
+(// int audioFnameQueue[toneBufferLen) s
+/F-gs-font 10 10 SF
+18 700 M (147:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 700 M
+(// unsigned long au[toneBufferLength) s
+/F-gs-font 10 10 SF
+18 689 M (148:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 689 M
+(// unsigned long lastToneStart = 0;) s
+/F-gs-font 10 10 SF
+18 678 M (149:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 678 M
+(// byte toneStackPos = 0;) s
+/F-gs-font 10 10 SF
+18 667 M (150:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 667 M
+(// unsigned long lastBitChange = 0;) s
+/F-gs-font 10 10 SF
+18 656 M (151:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+18 645 M (152:) s
+18 634 M (153:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 634 M
+(typedef) s
+/F-gs-font 10 10 SF
+0 setgray
+90 634 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+96 634 M
+(enum) s
+/F-gs-font 10 10 SF
+0 setgray
+120 634 M
+( {) s
+18 623 M (154:) s
+48 623 M
+(  RECEIVE,) s
+18 612 M (155:) s
+48 612 M
+(  TRANSMIT,) s
+18 601 M (156:) s
+48 601 M
+(  ERROR) s
+18 590 M (157:) s
+48 590 M
+(} OPERATING_MODE;) s
+18 579 M (158:) s
+18 568 M (159:) s
+48 568 M
+(OPERATING_MODE mode = RECEIVE;) s
+18 557 M (160:) s
+18 546 M (161:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 546 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 546 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 546 M
+(setup) s
+/F-gs-font 10 10 SF
+0 setgray
+108 546 M
+(\(\) {) s
+18 535 M (162:) s
+48 535 M
+(    Serial.begin\(115200\);) s
+18 524 M (163:) s
+18 513 M (164:) s
+48 513 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 513 M
+(/******** INITIALIZATION */) s
+/F-gs-font 10 10 SF
+0 setgray
+18 502 M (165:) s
+48 502 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 502 M
+(/*) s
+/F-gs-font 10 10 SF
+18 491 M (166:) s
+/Courier-Oblique 10 10 SUF
+48 491 M
+(    Steps:) s
+/F-gs-font 10 10 SF
+18 480 M (167:) s
+/Courier-Oblique 10 10 SUF
+48 480 M
+(    1\) Initialize:) s
+/F-gs-font 10 10 SF
+18 469 M (168:) s
+/Courier-Oblique 10 10 SUF
+48 469 M
+(        - Blink blue to show that we) s
+/F-gs-font 10 10 SF
+18 458 M (169:) s
+/Courier-Oblique 10 10 SUF
+48 458 M
+(        - LED strip, battery monitor) s
+/F-gs-font 10 10 SF
+18 447 M (170:) s
+/Courier-Oblique 10 10 SUF
+48 447 M
+(        - Blink green to show initia) s
+/F-gs-font 10 10 SF
+18 436 M (171:) s
+/Courier-Oblique 10 10 SUF
+48 436 M
+(        - If anything fails: display) s
+/F-gs-font 10 10 SF
+18 425 M (172:) s
+/Courier-Oblique 10 10 SUF
+48 425 M
+(    */) s
+/F-gs-font 10 10 SF
+0 setgray
+18 414 M (173:) s
+18 403 M (174:) s
+48 403 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 403 M
+(// Setup pin modes) s
+/F-gs-font 10 10 SF
+18 392 M (175:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 392 M
+(    pinMode\(LED_PIN, OUTPUT\);) s
+18 381 M (176:) s
+48 381 M
+(    pinMode\(HYDROPHONE_PIN, OUTPUT\);) s
+18 370 M (177:) s
+48 370 M
+(    pinMode\(RELAY_PIN, OUTPUT\);) s
+18 359 M (178:) s
+18 348 M (179:) s
+48 348 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 348 M
+(// Initial pin setup) s
+/F-gs-font 10 10 SF
+18 337 M (180:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 337 M
+(    digitalWrite\(RELAY_PIN, LOW\);) s
+18 326 M (181:) s
+48 326 M
+(   ) s
+18 315 M (182:) s
+48 315 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 315 M
+(// Get LEDs up and running) s
+/F-gs-font 10 10 SF
+18 304 M (183:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 304 M
+(    strip.begin\(\);) s
+18 293 M (184:) s
+48 293 M
+(    strip.show\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+156 293 M
+(// Initialize all ) s
+/F-gs-font 10 10 SF
+18 282 M (185:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 282 M
+(    strip.setBrightness\(LED_BRIGHTNE) s
+18 271 M (186:) s
+18 260 M (187:) s
+48 260 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 260 M
+(// LEDs: show that we are alive) s
+/F-gs-font 10 10 SF
+18 249 M (188:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 249 M
+(    strip.fill\(purple, 0, 20\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+234 249 M
+(// li) s
+/F-gs-font 10 10 SF
+18 238 M (189:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 238 M
+(    strip.show\(\);) s
+18 227 M (190:) s
+48 227 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 227 M
+(// keep strip on, then continue ) s
+/F-gs-font 10 10 SF
+18 216 M (191:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 216 M
+(    delay\(500\); ) s
+18 205 M (192:) s
+48 205 M
+(    strip.clear\(\);) s
+18 194 M (193:) s
+18 183 M (194:) s
+48 183 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 183 M
+(// Initialize SD card) s
+/F-gs-font 10 10 SF
+18 172 M (195:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 172 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 172 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 172 M
+( \(!SD.begin\(10\)\) {) s
+18 161 M (196:) s
+48 161 M
+(      Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+174 161 M
+("[ERROR] SD car) s
+/F-gs-font 10 10 SF
+18 150 M (197:) s
+/Courier-Bold 10 10 SUF
+48 150 M
+(      initializationError\(1\);) s
+/F-gs-font 10 10 SF
+18 139 M (198:) s
+/Courier-Bold 10 10 SUF
+48 139 M
+(    }) s
+/F-gs-font 10 10 SF
+18 128 M (199:) s
+/Courier-Bold 10 10 SUF
+48 128 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 128 M
+("[OK] SD card ini) s
+/F-gs-font 10 10 SF
+18 117 M (200:) s
+/Courier-Bold 10 10 SUF
+48 117 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 117 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 117 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 117 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 117 M
+( i=0; i<6; i++\) {) s
+18 106 M (201:) s
+48 106 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 106 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 106 M
+( \(!SD.exists\(audio_messages_) s
+18 95 M (202:) s
+48 95 M
+(        initializationError\(2\);) s
+18 84 M (203:) s
+48 84 M
+(      }) s
+18 73 M (204:) s
+48 73 M
+(    }) s
+18 62 M (205:) s
+48 62 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 62 M
+("[OK] Found all a) s
+/F-gs-font 10 10 SF
+18 51 M (206:) s
+/Courier-Bold 10 10 SUF
+48 51 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 51 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 51 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 51 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 51 M
+( i=0; i<16; i++\) {) s
+18 40 M (207:) s
+48 40 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 40 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 40 M
+( \(!SD.exists\(audio_ids_array) s
+18 29 M (208:) s
+18 18 M (209:) s
+48 18 M
+(        initializationError\(2\);) s
+18 7 M (210:) s
+48 7 M
+(      }) s
+291.5 766 M (211:) s
+321.5 766 M
+(    }) s
+291.5 755 M (212:) s
+321.5 755 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 755 M
+(// Check for ID.txt and read the) s
+/F-gs-font 10 10 SF
+291.5 744 M (213:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 744 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 744 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 744 M
+( \(SD.exists\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+429.5 744 M
+("ID.txt") s
+/F-gs-font 10 10 SF
+0 setgray
+477.5 744 M
+(\)\) {) s
+291.5 733 M (214:) s
+321.5 733 M
+(      File idFile = SD.open\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+489.5 733 M
+("ID.txt") s
+/F-gs-font 10 10 SF
+0 setgray
+537.5 733 M
+() s
+291.5 722 M (215:) s
+321.5 722 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 722 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 722 M
+( \(idFile\) {) s
+291.5 711 M (216:) s
+321.5 711 M
+(        String idContent = idFile.re) s
+291.5 700 M (217:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 700 M
+(        idContent.trim\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+477.5 700 M
+(// Remove ) s
+/F-gs-font 10 10 SF
+291.5 689 M (218:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 689 M
+(        user_ID = idContent.toInt\(\);) s
+291.5 678 M (219:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 678 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 678 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 678 M
+( \(user_ID == 1\) {) s
+291.5 667 M (220:) s
+321.5 667 M
+(          other_user_ID = 2;) s
+291.5 656 M (221:) s
+321.5 656 M
+(        } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 656 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 656 M
+( {) s
+291.5 645 M (222:) s
+321.5 645 M
+(          other_user_ID = 1;) s
+291.5 634 M (223:) s
+321.5 634 M
+(        }) s
+291.5 623 M (224:) s
+321.5 623 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 623 M
+("[OK] User ID s) s
+/F-gs-font 10 10 SF
+291.5 612 M (225:) s
+/Courier-Bold 10 10 SUF
+321.5 612 M
+(        Serial.println\(user_ID\);) s
+/F-gs-font 10 10 SF
+291.5 601 M (226:) s
+/Courier-Bold 10 10 SUF
+321.5 601 M
+(        idFile.close\(\);) s
+/F-gs-font 10 10 SF
+291.5 590 M (227:) s
+/Courier-Bold 10 10 SUF
+321.5 590 M
+(      } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 590 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 590 M
+( {) s
+291.5 579 M (228:) s
+321.5 579 M
+(        Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+459.5 579 M
+("[ERROR] Fail) s
+/F-gs-font 10 10 SF
+291.5 568 M (229:) s
+/Courier-Bold 10 10 SUF
+321.5 568 M
+(        initializationError\(3\);) s
+/F-gs-font 10 10 SF
+291.5 557 M (230:) s
+/Courier-Bold 10 10 SUF
+321.5 557 M
+(      }) s
+/F-gs-font 10 10 SF
+291.5 546 M (231:) s
+/Courier-Bold 10 10 SUF
+321.5 546 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 546 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 546 M
+( {) s
+291.5 535 M (232:) s
+321.5 535 M
+(      Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 535 M
+("[ERROR] ID.txt) s
+/F-gs-font 10 10 SF
+291.5 524 M (233:) s
+/Courier-Bold 10 10 SUF
+321.5 524 M
+(      initializationError\(3\);) s
+/F-gs-font 10 10 SF
+291.5 513 M (234:) s
+/Courier-Bold 10 10 SUF
+321.5 513 M
+(    }) s
+/F-gs-font 10 10 SF
+291.5 502 M (235:) s
+/Courier-Bold 10 10 SUF
+321.5 502 M
+(    initializationPass\(2\);) s
+/F-gs-font 10 10 SF
+291.5 491 M (236:) s
+/Courier-Bold 10 10 SUF
+321.5 491 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+435.5 491 M
+("[OK] Found all a) s
+/F-gs-font 10 10 SF
+291.5 480 M (237:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 469 M (238:) s
+/Courier-Bold 10 10 SUF
+321.5 469 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 469 M
+(// Assign underwater messages) s
+/F-gs-font 10 10 SF
+291.5 458 M (239:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 458 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 458 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 458 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+375.5 458 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 458 M
+( i=1; i<=) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+447.5 458 M
+(sizeof) s
+/F-gs-font 10 10 SF
+0 setgray
+483.5 458 M
+(\(UM_array) s
+291.5 447 M (240:) s
+321.5 447 M
+(      UM_array[i] = createUnderwater) s
+291.5 436 M (241:) s
+321.5 436 M
+(    }) s
+291.5 425 M (242:) s
+321.5 425 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+435.5 425 M
+("[OK] Underwater ) s
+/F-gs-font 10 10 SF
+291.5 414 M (243:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 403 M (244:) s
+/Courier-Bold 10 10 SUF
+321.5 403 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 403 M
+(// Get IO expander up and runnin) s
+/F-gs-font 10 10 SF
+291.5 392 M (245:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 392 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 392 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 392 M
+( \(!mcp.begin_I2C\(0x27\)\) {) s
+291.5 381 M (246:) s
+321.5 381 M
+(        Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+459.5 381 M
+("[Error] I2C ) s
+/F-gs-font 10 10 SF
+291.5 370 M (247:) s
+/Courier-Bold 10 10 SUF
+321.5 370 M
+(        initializationError\(3\);) s
+/F-gs-font 10 10 SF
+291.5 359 M (248:) s
+/Courier-Bold 10 10 SUF
+321.5 359 M
+(    }) s
+/F-gs-font 10 10 SF
+291.5 348 M (249:) s
+/Courier-Bold 10 10 SUF
+321.5 348 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 348 M
+(//Pinmode for I/O expander pins) s
+/F-gs-font 10 10 SF
+291.5 337 M (250:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 337 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 337 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 337 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+375.5 337 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 337 M
+( i=0; i<6; i++\) {) s
+291.5 326 M (251:) s
+321.5 326 M
+(      mcp.pinMode\(i, INPUT_PULLUP\);) s
+291.5 315 M (252:) s
+321.5 315 M
+(    }) s
+291.5 304 M (253:) s
+321.5 304 M
+(    initializationPass\(3\);) s
+291.5 293 M (254:) s
+291.5 282 M (255:) s
+321.5 282 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+435.5 282 M
+("[OK] I2C expande) s
+/F-gs-font 10 10 SF
+291.5 271 M (256:) s
+/Courier-Bold 10 10 SUF
+321.5 271 M
+(    ) s
+/F-gs-font 10 10 SF
+291.5 260 M (257:) s
+/Courier-Bold 10 10 SUF
+321.5 260 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 260 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 260 M
+( \(!maxlipo.begin\(\)\) {) s
+291.5 249 M (258:) s
+321.5 249 M
+(       Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+453.5 249 M
+("[Error] Batte) s
+/F-gs-font 10 10 SF
+291.5 238 M (259:) s
+/Courier-Bold 10 10 SUF
+321.5 238 M
+(       initializationError\(4\);) s
+/F-gs-font 10 10 SF
+291.5 227 M (260:) s
+/Courier-Bold 10 10 SUF
+321.5 227 M
+(    }) s
+/F-gs-font 10 10 SF
+291.5 216 M (261:) s
+/Courier-Bold 10 10 SUF
+321.5 216 M
+(    Serial.print\(F\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+435.5 216 M
+("[OK] Battery mon) s
+/F-gs-font 10 10 SF
+291.5 205 M (262:) s
+/Courier-Bold 10 10 SUF
+321.5 205 M
+(    Serial.print\(F\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+435.5 205 M
+(" with Chip ID: 0) s
+/F-gs-font 10 10 SF
+291.5 194 M (263:) s
+/Courier-Bold 10 10 SUF
+321.5 194 M
+(    Serial.println\(maxlipo.getChipID) s
+/F-gs-font 10 10 SF
+291.5 183 M (264:) s
+/Courier-Bold 10 10 SUF
+321.5 183 M
+(    maxlipo.setAlertVoltages\(2.0, 4.) s
+/F-gs-font 10 10 SF
+291.5 172 M (265:) s
+/Courier-Bold 10 10 SUF
+321.5 172 M
+(    initializationPass\(4\);) s
+/F-gs-font 10 10 SF
+291.5 161 M (266:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 150 M (267:) s
+/Courier-Bold 10 10 SUF
+321.5 150 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 150 M
+(// Get BC transducer amp up and ) s
+/F-gs-font 10 10 SF
+291.5 139 M (268:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 139 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 139 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 139 M
+( \(!audioamp.begin\(\)\) {) s
+291.5 128 M (269:) s
+321.5 128 M
+(      Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 128 M
+("[Error] TPA201) s
+/F-gs-font 10 10 SF
+291.5 117 M (270:) s
+/Courier-Bold 10 10 SUF
+321.5 117 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+357.5 117 M
+(// initializationError\(5\);) s
+/F-gs-font 10 10 SF
+291.5 106 M (271:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 106 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 106 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 106 M
+( {) s
+291.5 95 M (272:) s
+321.5 95 M
+(      audioamp.setGain\(30\);) s
+291.5 84 M (273:) s
+321.5 84 M
+(      Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 84 M
+("[OK] TPA2016 i) s
+/F-gs-font 10 10 SF
+291.5 73 M (274:) s
+/Courier-Bold 10 10 SUF
+321.5 73 M
+(    }) s
+/F-gs-font 10 10 SF
+291.5 62 M (275:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 51 M (276:) s
+/Courier-Bold 10 10 SUF
+321.5 51 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 51 M
+(// Get audio shield up and runni) s
+/F-gs-font 10 10 SF
+291.5 40 M (277:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 40 M
+(    AudioMemory\(500\);) s
+291.5 29 M (278:) s
+321.5 29 M
+(    inputAmp.gain\(2\);        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+495.5 29 M
+(// ampl) s
+/F-gs-font 10 10 SF
+291.5 18 M (279:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 18 M
+(    outputAmp.gain\(2\);) s
+291.5 7 M (280:) s
+321.5 7 M
+(    audioShield.enable\(\);) s
+_R
+S
+%%Page: (3) 3
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 3 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+18 766 M (281:) s
+48 766 M
+(    audioShield.inputSelect\(myInput\)) s
+18 755 M (282:) s
+48 755 M
+(    audioShield.micGain\(90\);) s
+18 744 M (283:) s
+48 744 M
+(    audioShield.volume\(1\);) s
+18 733 M (284:) s
+48 733 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 733 M
+(// setAudioSampleI2SFreq\(sampleR) s
+/F-gs-font 10 10 SF
+18 722 M (285:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 722 M
+(    Serial.printf\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+156 722 M
+("[OK] SGTL5000 ini) s
+/F-gs-font 10 10 SF
+18 711 M (286:) s
+/Courier-Bold 10 10 SUF
+48 711 M
+(    initializationPass\(6\);) s
+/F-gs-font 10 10 SF
+18 700 M (287:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+18 689 M (288:) s
+/Courier-Bold 10 10 SUF
+48 689 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 689 M
+(// Setup receiver state machine,) s
+/F-gs-font 10 10 SF
+18 678 M (289:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 678 M
+(    transitionReceivingState\(LISTENI) s
+18 667 M (290:) s
+48 667 M
+(    transitionOperatingMode\(RECEIVE\)) s
+18 656 M (291:) s
+48 656 M
+(    initializationPass\(7\);) s
+18 645 M (292:) s
+48 645 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 645 M
+("[OK] State machi) s
+/F-gs-font 10 10 SF
+18 634 M (293:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+18 623 M (294:) s
+/Courier-Bold 10 10 SUF
+48 623 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 623 M
+("Done initializin) s
+/F-gs-font 10 10 SF
+18 612 M (295:) s
+/Courier-Bold 10 10 SUF
+48 612 M
+(    Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 612 M
+("Welcome to NEPTU) s
+/F-gs-font 10 10 SF
+18 601 M (296:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+18 590 M (297:) s
+/Courier-Bold 10 10 SUF
+48 590 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 590 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+90 590 M
+( dly = 50; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+156 590 M
+(// Initial delay) s
+/F-gs-font 10 10 SF
+18 579 M (298:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 579 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 579 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+102 579 M
+( speedFactor = 0.95; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+228 579 M
+(// Fac) s
+/F-gs-font 10 10 SF
+18 568 M (299:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+18 557 M (300:) s
+48 557 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 557 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 557 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 557 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 557 M
+( cycle = 0; cycle < 6; c) s
+18 546 M (301:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 546 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 546 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+102 546 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+114 546 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+132 546 M
+( i = 0; i < strip.numP) s
+18 535 M (302:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 535 M
+(        strip.clear\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+186 535 M
+(// Clear all ) s
+/F-gs-font 10 10 SF
+18 524 M (303:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 524 M
+(        ) s
+18 513 M (304:) s
+48 513 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 513 M
+(// Illuminate the current pi) s
+/F-gs-font 10 10 SF
+18 502 M (305:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 502 M
+(        strip.setPixelColor\(i, strip) s
+18 491 M (306:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 491 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 491 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+108 491 M
+( \(i + 1 < strip.numPixels\() s
+18 480 M (307:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 480 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 480 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+108 480 M
+( \(i + 2 < strip.numPixels\() s
+18 469 M (308:) s
+/F-gs-font 10 10 SF
+0 setgray
+18 458 M (309:) s
+48 458 M
+(        strip.show\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+180 458 M
+(// Update the ) s
+/F-gs-font 10 10 SF
+18 447 M (310:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 447 M
+(        delay\(dly\);   ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+180 447 M
+(// Pause for t) s
+/F-gs-font 10 10 SF
+18 436 M (311:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+18 425 M (312:) s
+48 425 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 425 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+108 425 M
+( \(i % 6 == 0\) {) s
+18 414 M (313:) s
+48 414 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+108 414 M
+(// Gradually decrease dela) s
+/F-gs-font 10 10 SF
+18 403 M (314:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 403 M
+(          dly = max\(5, \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+192 403 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+210 403 M
+(\)\(dly * s) s
+18 392 M (315:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 392 M
+(        }) s
+18 381 M (316:) s
+48 381 M
+(      }) s
+18 370 M (317:) s
+48 370 M
+(    }) s
+18 359 M (318:) s
+48 359 M
+(    strip.clear\(\);) s
+18 348 M (319:) s
+48 348 M
+(    strip.show\(\);) s
+18 337 M (320:) s
+18 326 M (321:) s
+48 326 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 326 M
+(// Play sound effect) s
+/F-gs-font 10 10 SF
+18 315 M (322:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 315 M
+(    playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+198 315 M
+("WELCOME.wa) s
+/F-gs-font 10 10 SF
+18 304 M (323:) s
+/Courier-Bold 10 10 SUF
+48 304 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 304 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+102 304 M
+( \(playBoneconduct.isPlaying) s
+18 293 M (324:) s
+48 293 M
+(    playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+198 293 M
+("user.wav") s
+/F-gs-font 10 10 SF
+0 setgray
+258 293 M
+(\)) s
+18 282 M (325:) s
+48 282 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 282 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+102 282 M
+( \(playBoneconduct.isPlaying) s
+18 271 M (326:) s
+48 271 M
+(    playBoneconduct.play\(audio_ids_a) s
+18 260 M (327:) s
+48 260 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 260 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+102 260 M
+( \(playBoneconduct.isPlaying) s
+18 249 M (328:) s
+48 249 M
+(}) s
+18 238 M (329:) s
+18 227 M (330:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 227 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+96 227 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 227 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+126 227 M
+( lastPlayedBatteryTime ) s
+18 216 M (331:) s
+18 205 M (332:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 205 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 205 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 205 M
+(loop) s
+/F-gs-font 10 10 SF
+0 setgray
+102 205 M
+(\(\) {) s
+18 194 M (333:) s
+48 194 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 194 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 194 M
+( \(toneStackPos == 0\) {) s
+18 183 M (334:) s
+48 183 M
+(    strip.clear\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+162 183 M
+(// Set all pixel ) s
+/F-gs-font 10 10 SF
+18 172 M (335:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 172 M
+(    transitionOperatingMode\(RECEIVE\)) s
+18 161 M (336:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 161 M
+(  }) s
+18 150 M (337:) s
+18 139 M (338:) s
+48 139 M
+(   ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+66 139 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+78 139 M
+( \(millis\(\) - lastBattCheckTime ) s
+18 128 M (339:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 128 M
+(    lastBattCheckTime = millis\(\);) s
+18 117 M (340:) s
+18 106 M (341:) s
+48 106 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 106 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+102 106 M
+( cellVoltage = maxlipo.cell) s
+18 95 M (342:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 95 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 95 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 95 M
+( \(isnan\(cellVoltage\)\) {) s
+18 84 M (343:) s
+48 84 M
+(      Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+174 84 M
+("Failed to read) s
+/F-gs-font 10 10 SF
+18 73 M (344:) s
+/Courier-Bold 10 10 SUF
+48 73 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 73 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+108 73 M
+( {) s
+18 62 M (345:) s
+48 62 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+84 62 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+114 62 M
+( cellPercent = maxlipo.ce) s
+18 51 M (346:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 51 M
+(      Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+162 51 M
+("Battery V:") s
+/F-gs-font 10 10 SF
+0 setgray
+234 51 M
+(\);) s
+18 40 M (347:) s
+48 40 M
+(      Serial.println\(cellPercent\);) s
+18 29 M (348:) s
+18 18 M (349:) s
+48 18 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 18 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 18 M
+( \(pctBufPointer == -1\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+246 18 M
+(//F) s
+/F-gs-font 10 10 SF
+18 7 M (350:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 7 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 7 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+114 7 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+126 7 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+144 7 M
+( i=0; i<BATTERY_SAMP) s
+291.5 766 M (351:) s
+321.5 766 M
+(          pctBuf[i] = maxlipo.cellVo) s
+291.5 755 M (352:) s
+321.5 755 M
+(        }) s
+291.5 744 M (353:) s
+321.5 744 M
+(        pctBufPointer = 1; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+483.5 744 M
+(//Increme) s
+/F-gs-font 10 10 SF
+291.5 733 M (354:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 733 M
+(      } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 733 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 733 M
+( {) s
+291.5 722 M (355:) s
+321.5 722 M
+(        pctBuf[pctBufPointer] = maxl) s
+291.5 711 M (356:) s
+321.5 711 M
+(      }) s
+291.5 700 M (357:) s
+321.5 700 M
+(      pctBufPointer++;) s
+291.5 689 M (358:) s
+321.5 689 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 689 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 689 M
+( \(pctBufPointer >= BATTERY_S) s
+291.5 678 M (359:) s
+321.5 678 M
+(        pctBufPointer = 0;) s
+291.5 667 M (360:) s
+321.5 667 M
+(      }) s
+291.5 656 M (361:) s
+291.5 645 M (362:) s
+321.5 645 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 645 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 645 M
+( totPctBuf = 0.0;) s
+291.5 634 M (363:) s
+321.5 634 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 634 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 634 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+387.5 634 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 634 M
+( i = 0; i < BATTERY_SA) s
+291.5 623 M (364:) s
+321.5 623 M
+(        totPctBuf += pctBuf[i];) s
+291.5 612 M (365:) s
+321.5 612 M
+(      }) s
+291.5 601 M (366:) s
+291.5 590 M (367:) s
+321.5 590 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 590 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 590 M
+( avgPctBuf = totPctBuf / ) s
+291.5 579 M (368:) s
+321.5 579 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 579 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 579 M
+( bufDifference = maxlipo.) s
+291.5 568 M (369:) s
+291.5 557 M (370:) s
+321.5 557 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 557 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 557 M
+( \(millis\(\) - lastPlayedBatte) s
+291.5 546 M (371:) s
+321.5 546 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 546 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 546 M
+( \(bufDifference > 0.05\) {) s
+291.5 535 M (372:) s
+321.5 535 M
+(          Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+471.5 535 M
+("Neptune ch) s
+/F-gs-font 10 10 SF
+291.5 524 M (373:) s
+/Courier-Bold 10 10 SUF
+321.5 524 M
+(          playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+507.5 524 M
+("CHAR) s
+/F-gs-font 10 10 SF
+291.5 513 M (374:) s
+/Courier-Bold 10 10 SUF
+321.5 513 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 513 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+411.5 513 M
+( \(playBoneconduct.isP) s
+291.5 502 M (375:) s
+321.5 502 M
+(        } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 502 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 502 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+411.5 502 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+423.5 502 M
+( \(bufDifference < -) s
+291.5 491 M (376:) s
+321.5 491 M
+(          Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+471.5 491 M
+("Neptune ch) s
+/F-gs-font 10 10 SF
+291.5 480 M (377:) s
+/Courier-Bold 10 10 SUF
+321.5 480 M
+(          playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+507.5 480 M
+("CHAR) s
+/F-gs-font 10 10 SF
+291.5 469 M (378:) s
+/Courier-Bold 10 10 SUF
+321.5 469 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 469 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+411.5 469 M
+( \(playBoneconduct.isP) s
+291.5 458 M (379:) s
+321.5 458 M
+(        }) s
+291.5 447 M (380:) s
+321.5 447 M
+(        lastPlayedBatteryTime = mill) s
+291.5 436 M (381:) s
+321.5 436 M
+(      }) s
+291.5 425 M (382:) s
+291.5 414 M (383:) s
+321.5 414 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+357.5 414 M
+(// Check if the battery percen) s
+/F-gs-font 10 10 SF
+291.5 403 M (384:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 403 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 403 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 403 M
+( \(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+387.5 403 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 403 M
+(\(cellPercent\) / 10\) < ) s
+291.5 392 M (385:) s
+321.5 392 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+369.5 392 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 392 M
+( percentRange = \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+489.5 392 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+507.5 392 M
+(\(cell) s
+291.5 381 M (386:) s
+321.5 381 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 381 M
+("Battery droppe) s
+/F-gs-font 10 10 SF
+291.5 370 M (387:) s
+/Courier-Bold 10 10 SUF
+321.5 370 M
+(        Serial.print\(percentRange\);) s
+/F-gs-font 10 10 SF
+291.5 359 M (388:) s
+/Courier-Bold 10 10 SUF
+321.5 359 M
+(        Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+459.5 359 M
+("% range.") s
+/F-gs-font 10 10 SF
+0 setgray
+519.5 359 M
+(\);) s
+291.5 348 M (389:) s
+291.5 337 M (390:) s
+321.5 337 M
+(        playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+495.5 337 M
+("BATTER) s
+/F-gs-font 10 10 SF
+291.5 326 M (391:) s
+/Courier-Bold 10 10 SUF
+321.5 326 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 326 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 326 M
+( \(playBoneconduct.isPla) s
+291.5 315 M (392:) s
+321.5 315 M
+(        playBoneconduct.play\(battery) s
+291.5 304 M (393:) s
+321.5 304 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 304 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 304 M
+( \(playBoneconduct.isPla) s
+291.5 293 M (394:) s
+291.5 282 M (395:) s
+321.5 282 M
+(        lastPercentage = cellPercent) s
+291.5 271 M (396:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 271 M
+(      }) s
+291.5 260 M (397:) s
+321.5 260 M
+(    }) s
+291.5 249 M (398:) s
+321.5 249 M
+(  }) s
+291.5 238 M (399:) s
+291.5 227 M (400:) s
+321.5 227 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 227 M
+(// LED pulsating effect!) s
+/F-gs-font 10 10 SF
+291.5 216 M (401:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 216 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 216 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 216 M
+( \(millis\(\) > lastLEDUpdateTime\) ) s
+291.5 205 M (402:) s
+321.5 205 M
+(    uint32_t color = strip.Color\(0, ) s
+291.5 194 M (403:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 194 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 194 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 194 M
+( \(dir\) {) s
+291.5 183 M (404:) s
+321.5 183 M
+(      counter++;) s
+291.5 172 M (405:) s
+321.5 172 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 172 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 172 M
+( {) s
+291.5 161 M (406:) s
+321.5 161 M
+(      counter--;) s
+291.5 150 M (407:) s
+321.5 150 M
+(    }) s
+291.5 139 M (408:) s
+321.5 139 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 139 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 139 M
+( \(counter <= 0 || counter >= 2) s
+291.5 128 M (409:) s
+321.5 128 M
+(    strip.fill\(color\);) s
+291.5 117 M (410:) s
+321.5 117 M
+(    strip.show\(\);) s
+291.5 106 M (411:) s
+321.5 106 M
+(    lastLEDUpdateTime = millis\(\) + 1) s
+291.5 95 M (412:) s
+321.5 95 M
+(  }) s
+291.5 84 M (413:) s
+321.5 84 M
+(  ) s
+291.5 73 M (414:) s
+321.5 73 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 73 M
+(//Deal with tone sending \(asynchro) s
+/F-gs-font 10 10 SF
+291.5 62 M (415:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 62 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 62 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 62 M
+( \(toneStackPos > 0\) {) s
+291.5 51 M (416:) s
+321.5 51 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 51 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 51 M
+( \(millis\(\) - lastToneStart > t) s
+291.5 40 M (417:) s
+321.5 40 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+357.5 40 M
+(// Serial.print\("ToneQueue: "\)) s
+/F-gs-font 10 10 SF
+291.5 29 M (418:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 29 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 29 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 29 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+387.5 29 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 29 M
+( i=1; i<toneBufferLeng) s
+291.5 18 M (419:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 18 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 18 M
+(// Serial.print\(toneFreqQu) s
+/F-gs-font 10 10 SF
+291.5 7 M (420:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 7 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 7 M
+(// Serial.print\("Hz@"\);) s
+_R
+S
+%%Page: (4) 4
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 4 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+/Courier-Oblique 10 10 SUF
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (4) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+0.698039 0.133333 0.133333 setrgbcolor
+/F-gs-font 10 10 SF
+18 766 M (421:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 766 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+108 766 M
+(// Serial.print\(toneDelayQ) s
+/F-gs-font 10 10 SF
+18 755 M (422:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 755 M
+(          toneFreqQueue[i-1] = toneF) s
+18 744 M (423:) s
+48 744 M
+(          toneDelayQueue[i-1] = tone) s
+18 733 M (424:) s
+48 733 M
+(      }) s
+18 722 M (425:) s
+48 722 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+84 722 M
+(// Serial.println\(\);) s
+/F-gs-font 10 10 SF
+18 711 M (426:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 711 M
+(      toneStackPos--; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+180 711 M
+(//we\342\\200\\231v) s
+/F-gs-font 10 10 SF
+18 700 M (427:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 700 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 700 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 700 M
+( \(toneStackPos > 0\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+228 700 M
+(//is t) s
+/F-gs-font 10 10 SF
+18 689 M (428:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 689 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+108 689 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+120 689 M
+( \(toneFreqQueue[0] > 0\) ) s
+18 678 M (429:) s
+48 678 M
+(          tone\(HYDROPHONE_PIN, toneF) s
+18 667 M (430:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 667 M
+(          }) s
+18 656 M (431:) s
+48 656 M
+(          lastToneStart = millis\(\);) s
+18 645 M (432:) s
+48 645 M
+(      } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 645 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+120 645 M
+( {) s
+18 634 M (433:) s
+48 634 M
+(          noTone\(HYDROPHONE_PIN\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+252 634 M
+(//) s
+/F-gs-font 10 10 SF
+18 623 M (434:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 623 M
+(      }) s
+18 612 M (435:) s
+48 612 M
+(    }) s
+18 601 M (436:) s
+48 601 M
+(  }) s
+18 590 M (437:) s
+18 579 M (438:) s
+48 579 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+60 579 M
+(// FFT has new data! Reads in data) s
+/F-gs-font 10 10 SF
+18 568 M (439:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 568 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 568 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 568 M
+( \(inputFFT.available\(\)\) {) s
+18 557 M (440:) s
+48 557 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 557 M
+(// each time new FFT data is ava) s
+/F-gs-font 10 10 SF
+18 546 M (441:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 546 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 546 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+102 546 M
+( maxBinAmp = 0;) s
+18 535 M (442:) s
+48 535 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+72 535 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+90 535 M
+( binNumber = 0;) s
+18 524 M (443:) s
+48 524 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 524 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 524 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 524 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 524 M
+( i = 0; i < 1024; i++\) {) s
+18 513 M (444:) s
+48 513 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+84 513 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+114 513 M
+( n = inputFFT.read\(i\);) s
+18 502 M (445:) s
+48 502 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 502 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 502 M
+( \(n > maxBinAmp && i >= FFT_) s
+18 491 M (446:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 491 M
+(        maxBinAmp = n;) s
+18 480 M (447:) s
+48 480 M
+(        binNumber = i;) s
+18 469 M (448:) s
+48 469 M
+(      }) s
+18 458 M (449:) s
+48 458 M
+(    }) s
+18 447 M (450:) s
+48 447 M
+(    Serial.print\(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+156 447 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+192 447 M
+(\)binNumber*\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+264 447 M
+() s
+/F-gs-font 10 10 SF
+18 436 M (451:) s
+/Courier-Bold 10 10 SUF
+48 436 M
+(    Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+150 436 M
+("Hz@") s
+/F-gs-font 10 10 SF
+0 setgray
+180 436 M
+(\);) s
+18 425 M (452:) s
+48 425 M
+(    Serial.println\(maxBinAmp\);) s
+18 414 M (453:) s
+48 414 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 414 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 414 M
+( \(sampling\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+168 414 M
+(// Valid start f) s
+/F-gs-font 10 10 SF
+18 403 M (454:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 403 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 403 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 403 M
+( \(validAmplitude\(maxBinAmp\)\)) s
+18 392 M (455:) s
+48 392 M
+(        samplingBuffer[samplingPoint) s
+18 381 M (456:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 381 M
+(        samplingPointer++;) s
+18 370 M (457:) s
+48 370 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 370 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+108 370 M
+( \(samplingPointer >= NUM_S) s
+18 359 M (458:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 359 M
+(          samplingPointer = 0;) s
+18 348 M (459:) s
+48 348 M
+(        }) s
+18 337 M (460:) s
+48 337 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 337 M
+(// Serial.print\("FFT: "\);) s
+/F-gs-font 10 10 SF
+18 326 M (461:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 326 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 326 M
+(// Serial.print\(binNumber\);) s
+/F-gs-font 10 10 SF
+18 315 M (462:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 315 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 315 M
+(// Serial.print\(" sampBufDep) s
+/F-gs-font 10 10 SF
+18 304 M (463:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 304 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 304 M
+(// Serial.println\(samplingPo) s
+/F-gs-font 10 10 SF
+18 293 M (464:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 293 M
+(      }) s
+18 282 M (465:) s
+48 282 M
+(    }) s
+18 271 M (466:) s
+48 271 M
+(    ) s
+18 260 M (467:) s
+48 260 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+72 260 M
+(// We get valid message start to) s
+/F-gs-font 10 10 SF
+18 249 M (468:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 249 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 249 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 249 M
+( \(curReceivingState == LISTENI) s
+18 238 M (469:) s
+48 238 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 238 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 238 M
+( \(validAmplitude\(maxBinAmp\) ) s
+18 227 M (470:) s
+48 227 M
+(        transitionReceivingState\(CHE) s
+18 216 M (471:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 216 M
+(      }) s
+18 205 M (472:) s
+48 205 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 205 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+108 205 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+114 205 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+126 205 M
+( \(curReceivingState == ) s
+18 194 M (473:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 194 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 194 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 194 M
+( \(isSampleBufferValid\(\) && f) s
+18 183 M (474:) s
+48 183 M
+(        Serial.println\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+186 183 M
+("SAW VALID ME) s
+/F-gs-font 10 10 SF
+18 172 M (475:) s
+/Courier-Bold 10 10 SUF
+48 172 M
+(        transitionReceivingState\(MES) s
+/F-gs-font 10 10 SF
+18 161 M (476:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 161 M
+(      } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 161 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+120 161 M
+( { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+138 161 M
+(// If buffer is not v) s
+/F-gs-font 10 10 SF
+18 150 M (477:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 150 M
+(        transitionReceivingState\(LIS) s
+18 139 M (478:) s
+48 139 M
+(      }) s
+18 128 M (479:) s
+48 128 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 128 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+108 128 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+114 128 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+126 128 M
+( \(curReceivingState == ) s
+18 117 M (480:) s
+48 117 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 117 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+96 117 M
+( \(isSampleBufferValid\(\)\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+258 117 M
+(/) s
+/F-gs-font 10 10 SF
+18 106 M (481:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 106 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 106 M
+(// Check if 1 or 0 \(or neith) s
+/F-gs-font 10 10 SF
+18 95 M (482:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 95 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+96 95 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+132 95 M
+( bufferAvgFreq = sampl) s
+18 84 M (483:) s
+48 84 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 84 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+108 84 M
+( \(freqMatchesBounds\(buffer) s
+18 73 M (484:) s
+48 73 M
+(          bitBuffer[bitPointer] = 1;) s
+18 62 M (485:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 62 M
+(        } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+108 62 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+132 62 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+138 62 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+150 62 M
+( \(freqMatchesBounds) s
+18 51 M (486:) s
+48 51 M
+(          bitBuffer[bitPointer] = 0;) s
+18 40 M (487:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 40 M
+(        }) s
+18 29 M (488:) s
+48 29 M
+(      }) s
+18 18 M (489:) s
+18 7 M (490:) s
+48 7 M
+(      clearSampleBuffer\(\);) s
+291.5 766 M (491:) s
+321.5 766 M
+(      lastBitChange = millis\(\) - 5; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+537.5 766 M
+() s
+/F-gs-font 10 10 SF
+291.5 755 M (492:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 755 M
+(      bitPointer++;) s
+291.5 744 M (493:) s
+291.5 733 M (494:) s
+321.5 733 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 733 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 733 M
+( \(bitPointer >= MESSAGE_LENG) s
+291.5 722 M (495:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 722 M
+(        uint8_t data = 0;) s
+291.5 711 M (496:) s
+321.5 711 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+369.5 711 M
+(// Combine bits in bitBuffer) s
+/F-gs-font 10 10 SF
+291.5 700 M (497:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 700 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 700 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 700 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+399.5 700 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+417.5 700 M
+( i = MESSAGE_LENGTH ) s
+291.5 689 M (498:) s
+321.5 689 M
+(          data = \(data << 1\) | bitBu) s
+291.5 678 M (499:) s
+321.5 678 M
+(        }) s
+291.5 667 M (500:) s
+321.5 667 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+369.5 667 M
+(// Assign the data to an Und) s
+/F-gs-font 10 10 SF
+291.5 656 M (501:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 656 M
+(        UnderwaterMessage recvdMessa) s
+291.5 645 M (502:) s
+321.5 645 M
+(        recvdMessage.data = data;) s
+291.5 634 M (503:) s
+321.5 634 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 634 M
+("Got message ra) s
+/F-gs-font 10 10 SF
+291.5 623 M (504:) s
+/Courier-Bold 10 10 SUF
+321.5 623 M
+(        Serial.print\(recvdMessage.ms) s
+/F-gs-font 10 10 SF
+291.5 612 M (505:) s
+/Courier-Bold 10 10 SUF
+321.5 612 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 612 M
+(", ID = ") s
+/F-gs-font 10 10 SF
+0 setgray
+501.5 612 M
+(\);) s
+291.5 601 M (506:) s
+321.5 601 M
+(        Serial.print\(recvdMessage.id) s
+291.5 590 M (507:) s
+321.5 590 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 590 M
+(" --- ") s
+/F-gs-font 10 10 SF
+0 setgray
+489.5 590 M
+(\);) s
+291.5 579 M (508:) s
+321.5 579 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 579 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 579 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+399.5 579 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+417.5 579 M
+( i = UnderwaterMessa) s
+291.5 568 M (509:) s
+321.5 568 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 568 M
+(// Shift and mask to get e) s
+/F-gs-font 10 10 SF
+291.5 557 M (510:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 557 M
+(          Serial.print\(\(recvdMessage) s
+291.5 546 M (511:) s
+321.5 546 M
+(        }) s
+291.5 535 M (512:) s
+291.5 524 M (513:) s
+321.5 524 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 524 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 524 M
+( \(validUnderwaterMessage\(r) s
+291.5 513 M (514:) s
+321.5 513 M
+(          txrxAnimate\(0\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+477.5 513 M
+(//ANIMATE ) s
+/F-gs-font 10 10 SF
+291.5 502 M (515:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 502 M
+(          lastLEDUpdateTime = millis) s
+291.5 491 M (516:) s
+321.5 491 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 491 M
+(// Play audio correspondin) s
+/F-gs-font 10 10 SF
+291.5 480 M (517:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 480 M
+(          Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+459.5 480 M
+(" --- USER: ") s
+/F-gs-font 10 10 SF
+0 setgray
+537.5 480 M
+() s
+291.5 469 M (518:) s
+321.5 469 M
+(          Serial.print\(user_ids_arra) s
+291.5 458 M (519:) s
+291.5 447 M (520:) s
+321.5 447 M
+(          playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+507.5 447 M
+("user) s
+/F-gs-font 10 10 SF
+291.5 436 M (521:) s
+/Courier-Bold 10 10 SUF
+321.5 436 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 436 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+411.5 436 M
+( \(playBoneconduct.isP) s
+291.5 425 M (522:) s
+321.5 425 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 425 M
+(//UNCOMMENT TO USE PACKET ) s
+/F-gs-font 10 10 SF
+291.5 414 M (523:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 414 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 414 M
+(// playBoneconduct.play\(au) s
+/F-gs-font 10 10 SF
+291.5 403 M (524:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 403 M
+(          ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+381.5 403 M
+(// HARDCODED ID) s
+/F-gs-font 10 10 SF
+291.5 392 M (525:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 392 M
+(          playBoneconduct.play\(audio) s
+291.5 381 M (526:) s
+321.5 381 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 381 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+411.5 381 M
+( \(playBoneconduct.isP) s
+291.5 370 M (527:) s
+321.5 370 M
+(          playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+507.5 370 M
+("said) s
+/F-gs-font 10 10 SF
+291.5 359 M (528:) s
+/Courier-Bold 10 10 SUF
+321.5 359 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 359 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+411.5 359 M
+( \(playBoneconduct.isP) s
+291.5 348 M (529:) s
+291.5 337 M (530:) s
+321.5 337 M
+(          ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+381.5 337 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 337 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+411.5 337 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+429.5 337 M
+( c = 0; c < 6; c++) s
+291.5 326 M (531:) s
+321.5 326 M
+(            ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+393.5 326 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+405.5 326 M
+( \(recvdMessage.msg == ) s
+291.5 315 M (532:) s
+321.5 315 M
+(                Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+495.5 315 M
+(" --- M) s
+/F-gs-font 10 10 SF
+291.5 304 M (533:) s
+/Courier-Bold 10 10 SUF
+321.5 304 M
+(                Serial.println\(messa) s
+/F-gs-font 10 10 SF
+291.5 293 M (534:) s
+/Courier-Bold 10 10 SUF
+321.5 293 M
+(                playBoneconduct.play) s
+/F-gs-font 10 10 SF
+291.5 282 M (535:) s
+/Courier-Bold 10 10 SUF
+321.5 282 M
+(            }) s
+/F-gs-font 10 10 SF
+291.5 271 M (536:) s
+/Courier-Bold 10 10 SUF
+321.5 271 M
+(          }) s
+/F-gs-font 10 10 SF
+291.5 260 M (537:) s
+/Courier-Bold 10 10 SUF
+321.5 260 M
+(        }) s
+/F-gs-font 10 10 SF
+291.5 249 M (538:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 238 M (539:) s
+/Courier-Bold 10 10 SUF
+321.5 238 M
+(        transitionReceivingState\(LIS) s
+/F-gs-font 10 10 SF
+291.5 227 M (540:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 227 M
+(      }) s
+291.5 216 M (541:) s
+321.5 216 M
+(    }) s
+291.5 205 M (542:) s
+321.5 205 M
+(  }) s
+291.5 194 M (543:) s
+291.5 183 M (544:) s
+321.5 183 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 183 M
+(// BUTTONS AND TRANSMITTING) s
+/F-gs-font 10 10 SF
+291.5 172 M (545:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 172 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 172 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 172 M
+( \(millis\(\) - lastButtonCheckTime) s
+291.5 161 M (546:) s
+321.5 161 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 161 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 161 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+375.5 161 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 161 M
+( b = 0; b < 6; b++\) {) s
+291.5 150 M (547:) s
+321.5 150 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+357.5 150 M
+(// Serial.print\(mcp.digitalRea) s
+/F-gs-font 10 10 SF
+291.5 139 M (548:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 139 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 139 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 139 M
+( \(mcp.digitalRead\(b\) == LOW\)) s
+291.5 128 M (549:) s
+321.5 128 M
+(        lastButtonCheckTime = millis) s
+291.5 117 M (550:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 117 M
+(        Serial.print\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+447.5 117 M
+("Sending messag) s
+/F-gs-font 10 10 SF
+291.5 106 M (551:) s
+/Courier-Bold 10 10 SUF
+321.5 106 M
+(        Serial.println\(b\);) s
+/F-gs-font 10 10 SF
+291.5 95 M (552:) s
+/Courier-Bold 10 10 SUF
+321.5 95 M
+(        strip.clear\(\);) s
+/F-gs-font 10 10 SF
+291.5 84 M (553:) s
+/Courier-Bold 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 73 M (554:) s
+/Courier-Bold 10 10 SUF
+321.5 73 M
+(        txrxAnimate\(1\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+465.5 73 M
+(//ANIMATE LE) s
+/F-gs-font 10 10 SF
+291.5 62 M (555:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 62 M
+(        lastLEDUpdateTime = millis\(\)) s
+291.5 51 M (556:) s
+291.5 40 M (557:) s
+321.5 40 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+369.5 40 M
+(// BONE CONDUCTION CONFIRMAT) s
+/F-gs-font 10 10 SF
+291.5 29 M (558:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 29 M
+(        playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+495.5 29 M
+("you.wa) s
+/F-gs-font 10 10 SF
+291.5 18 M (559:) s
+/Courier-Bold 10 10 SUF
+321.5 18 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+369.5 18 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 18 M
+( \(playBoneconduct.isPla) s
+291.5 7 M (560:) s
+321.5 7 M
+(        playBoneconduct.play\() s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+495.5 7 M
+("said.w) s
+_R
+S
+%%Page: (5) 5
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 5 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+/Courier-Bold 10 10 SUF
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (5) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+0.737255 0.560784 0.560784 setrgbcolor
+/F-gs-font 10 10 SF
+18 766 M (561:) s
+/Courier-Bold 10 10 SUF
+48 766 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 766 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+126 766 M
+( \(playBoneconduct.isPla) s
+18 755 M (562:) s
+48 755 M
+(        playBoneconduct.play\(audio_m) s
+18 744 M (563:) s
+18 733 M (564:) s
+48 733 M
+(        transmitMessageAsync\(UM_arra) s
+18 722 M (565:) s
+/F-gs-font 10 10 SF
+0 setgray
+18 711 M (566:) s
+48 711 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 711 M
+(// Serial.println\("Queued me) s
+/F-gs-font 10 10 SF
+18 700 M (567:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 700 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+96 700 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+114 700 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+126 700 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+144 700 M
+( i = UnderwaterMessa) s
+18 689 M (568:) s
+48 689 M
+(            ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+120 689 M
+(// Shift and mask to get) s
+/F-gs-font 10 10 SF
+18 678 M (569:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 678 M
+(            Serial.print\(\(UM_array[b) s
+18 667 M (570:) s
+48 667 M
+(        }) s
+18 656 M (571:) s
+48 656 M
+(        Serial.println\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+204 656 M
+(// New lin) s
+/F-gs-font 10 10 SF
+18 645 M (572:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 645 M
+(      }) s
+18 634 M (573:) s
+48 634 M
+(    }) s
+18 623 M (574:) s
+48 623 M
+(  }) s
+18 612 M (575:) s
+48 612 M
+(}) s
+18 601 M (576:) s
+18 590 M (577:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 590 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 590 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 590 M
+(txrxAnimate) s
+/F-gs-font 10 10 SF
+0 setgray
+144 590 M
+(\(bool dir\) {) s
+18 579 M (578:) s
+48 579 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 579 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+78 579 M
+( leftArr[9] = {1, 2, 3, 4, 5, 1) s
+18 568 M (579:) s
+48 568 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 568 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+78 568 M
+( rightArr[9] = {1, 0, 11, 10, 9) s
+18 557 M (580:) s
+18 546 M (581:) s
+48 546 M
+(  strip.clear\(\);) s
+18 535 M (582:) s
+48 535 M
+(  strip.show\(\);) s
+18 524 M (583:) s
+18 513 M (584:) s
+48 513 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 513 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 513 M
+( \(dir\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+126 513 M
+(// Forward direction) s
+/F-gs-font 10 10 SF
+18 502 M (585:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 502 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 502 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 502 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 502 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 502 M
+( i = 0; i < 9; i++\) {) s
+18 491 M (586:) s
+48 491 M
+(      strip.setPixelColor\(leftArr[i]) s
+18 480 M (587:) s
+48 480 M
+(      strip.setPixelColor\(rightArr[i) s
+18 469 M (588:) s
+48 469 M
+(      strip.show\(\);) s
+18 458 M (589:) s
+48 458 M
+(      delay\(75\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+150 458 M
+(// Adjust delay for) s
+/F-gs-font 10 10 SF
+18 447 M (590:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 447 M
+(    }) s
+18 436 M (591:) s
+48 436 M
+(  } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 436 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+96 436 M
+( { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+114 436 M
+(// Reverse direction) s
+/F-gs-font 10 10 SF
+18 425 M (592:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 425 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 425 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 425 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+102 425 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+120 425 M
+( i = 8; i >= 0; i--\) {) s
+18 414 M (593:) s
+48 414 M
+(      strip.setPixelColor\(leftArr[i]) s
+18 403 M (594:) s
+48 403 M
+(      strip.setPixelColor\(rightArr[i) s
+18 392 M (595:) s
+48 392 M
+(      strip.show\(\);) s
+18 381 M (596:) s
+48 381 M
+(      delay\(75\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+150 381 M
+(// Adjust delay for) s
+/F-gs-font 10 10 SF
+18 370 M (597:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 370 M
+(    }) s
+18 359 M (598:) s
+48 359 M
+(  }) s
+18 348 M (599:) s
+48 348 M
+(}) s
+18 337 M (600:) s
+18 326 M (601:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 326 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+78 326 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+84 326 M
+(fAbs) s
+/F-gs-font 10 10 SF
+0 setgray
+108 326 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+114 326 M
+(float) s
+/F-gs-font 10 10 SF
+0 setgray
+144 326 M
+( n\) {) s
+18 315 M (602:) s
+48 315 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 315 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 315 M
+( \(n < 0\) ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+126 315 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+162 315 M
+( -n;) s
+18 304 M (603:) s
+48 304 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 304 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+96 304 M
+( n;) s
+18 293 M (604:) s
+48 293 M
+(}) s
+18 282 M (605:) s
+18 271 M (606:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 271 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 271 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 271 M
+(initializationPass) s
+/F-gs-font 10 10 SF
+0 setgray
+186 271 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+192 271 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+210 271 M
+( check\) {) s
+18 260 M (607:) s
+48 260 M
+(    strip.fill\(greenishwhite, 0, che) s
+18 249 M (608:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 249 M
+(    strip.show\(\);) s
+18 238 M (609:) s
+48 238 M
+(    delay\(100\);) s
+18 227 M (610:) s
+48 227 M
+(    strip.clear\(\);) s
+18 216 M (611:) s
+48 216 M
+(}) s
+18 205 M (612:) s
+18 194 M (613:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 194 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 194 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 194 M
+(initializationError) s
+/F-gs-font 10 10 SF
+0 setgray
+192 194 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+198 194 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+216 194 M
+( error\) ) s
+18 183 M (614:) s
+48 183 M
+(    strip.fill\(red, 0, error\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+234 183 M
+(// er) s
+/F-gs-font 10 10 SF
+18 172 M (615:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 172 M
+(    strip.show\(\);) s
+18 161 M (616:) s
+48 161 M
+(    delay\(2000\);) s
+18 150 M (617:) s
+48 150 M
+(    strip.clear\(\);) s
+18 139 M (618:) s
+18 128 M (619:) s
+48 128 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 128 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+102 128 M
+(\(true\);) s
+18 117 M (620:) s
+48 117 M
+(}) s
+18 106 M (621:) s
+18 95 M (622:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 95 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 95 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 95 M
+(transitionOperatingMode) s
+/F-gs-font 10 10 SF
+0 setgray
+216 95 M
+(\(OPERATI) s
+18 84 M (623:) s
+48 84 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 84 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 84 M
+( \(newMode == RECEIVE\) {) s
+18 73 M (624:) s
+48 73 M
+(        digitalWrite\(RELAY_PIN, LOW\)) s
+18 62 M (625:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 62 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 62 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+108 62 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+114 62 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+126 62 M
+( \(newMode == TRANSMIT\) ) s
+18 51 M (626:) s
+48 51 M
+(        digitalWrite\(RELAY_PIN, HIGH) s
+18 40 M (627:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 40 M
+(    }) s
+18 29 M (628:) s
+48 29 M
+(    mode = newMode;) s
+18 18 M (629:) s
+48 18 M
+(}) s
+18 7 M (630:) s
+291.5 766 M (631:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 766 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 766 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 766 M
+(clearSampleBuffer) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 766 M
+(\(\) {) s
+291.5 755 M (632:) s
+321.5 755 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 755 M
+(// Clear sampling buffer) s
+/F-gs-font 10 10 SF
+291.5 744 M (633:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 744 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 744 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 744 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+363.5 744 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 744 M
+( i=0; i<NUM_SAMPLES; i++\) ) s
+291.5 733 M (634:) s
+321.5 733 M
+(    samplingBuffer[i] = -1; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+489.5 733 M
+(// Inval) s
+/F-gs-font 10 10 SF
+291.5 722 M (635:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 722 M
+(  }) s
+291.5 711 M (636:) s
+321.5 711 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 711 M
+(//Reset sampling pointer) s
+/F-gs-font 10 10 SF
+291.5 700 M (637:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 700 M
+(  samplingPointer = 0;) s
+291.5 689 M (638:) s
+321.5 689 M
+(}) s
+291.5 678 M (639:) s
+291.5 667 M (640:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 667 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 667 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 667 M
+(clearBitBuffer) s
+/F-gs-font 10 10 SF
+0 setgray
+435.5 667 M
+(\(\) {) s
+291.5 656 M (641:) s
+321.5 656 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 656 M
+(// Clear bit \(received message\) bu) s
+/F-gs-font 10 10 SF
+291.5 645 M (642:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 645 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 645 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 645 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+363.5 645 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 645 M
+( i=0; i<MESSAGE_LENGTH; i+) s
+291.5 634 M (643:) s
+321.5 634 M
+(    bitBuffer[i] = 0;) s
+291.5 623 M (644:) s
+321.5 623 M
+(  }) s
+291.5 612 M (645:) s
+321.5 612 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 612 M
+(//Reset bit pointer) s
+/F-gs-font 10 10 SF
+291.5 601 M (646:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 601 M
+(  bitPointer = 0;) s
+291.5 590 M (647:) s
+321.5 590 M
+(}) s
+291.5 579 M (648:) s
+291.5 568 M (649:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 568 M
+(// Check whether sample buffer is va) s
+/F-gs-font 10 10 SF
+291.5 557 M (650:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 557 M
+(bool ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 557 M
+(isSampleBufferValid) s
+/F-gs-font 10 10 SF
+0 setgray
+465.5 557 M
+(\(\) {) s
+291.5 546 M (651:) s
+321.5 546 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 546 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 546 M
+( validCount = 0;) s
+291.5 535 M (652:) s
+321.5 535 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 535 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 535 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+363.5 535 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 535 M
+( i=0; i<NUM_SAMPLES; i++\) ) s
+291.5 524 M (653:) s
+321.5 524 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 524 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 524 M
+( \(samplingBuffer[i] != -1\) {) s
+291.5 513 M (654:) s
+321.5 513 M
+(      validCount++;) s
+291.5 502 M (655:) s
+321.5 502 M
+(    }) s
+291.5 491 M (656:) s
+321.5 491 M
+(  }) s
+291.5 480 M (657:) s
+321.5 480 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 480 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 480 M
+( \(validCount >= \(\(NUM_SAMPLE) s
+291.5 469 M (658:) s
+321.5 469 M
+(}) s
+291.5 458 M (659:) s
+291.5 447 M (660:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 447 M
+(// Find the most freqently occuring ) s
+/F-gs-font 10 10 SF
+291.5 436 M (661:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 436 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 436 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+363.5 436 M
+(sampleBufferMax) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 436 M
+(\(\) {) s
+291.5 425 M (662:) s
+321.5 425 M
+(  uint16_t frequency_hist[1024] = {0) s
+291.5 414 M (663:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 414 M
+(  uint16_t binNumber;) s
+291.5 403 M (664:) s
+321.5 403 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 403 M
+(// Populate the frequency histogra) s
+/F-gs-font 10 10 SF
+291.5 392 M (665:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 392 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 392 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 392 M
+( \(uint16_t i = 0; i < NUM_SAMPL) s
+291.5 381 M (666:) s
+321.5 381 M
+(    binNumber = samplingBuffer[i];) s
+291.5 370 M (667:) s
+321.5 370 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 370 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 370 M
+( \(binNumber < 1024\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+489.5 370 M
+(// Ensur) s
+/F-gs-font 10 10 SF
+291.5 359 M (668:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 359 M
+(      frequency_hist[binNumber]++;) s
+291.5 348 M (669:) s
+321.5 348 M
+(    }) s
+291.5 337 M (670:) s
+321.5 337 M
+(  }) s
+291.5 326 M (671:) s
+321.5 326 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 326 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 326 M
+( max_bin_count = 0;) s
+291.5 315 M (672:) s
+321.5 315 M
+(  binNumber = 0;) s
+291.5 304 M (673:) s
+321.5 304 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 304 M
+(// Find the most frequent bin) s
+/F-gs-font 10 10 SF
+291.5 293 M (674:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 293 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 293 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 293 M
+( \(int16_t i = 0; i < 1024; i++\)) s
+291.5 282 M (675:) s
+321.5 282 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 282 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 282 M
+( \(frequency_hist[i] > max_bin_) s
+291.5 271 M (676:) s
+321.5 271 M
+(      max_bin_count = frequency_hist) s
+291.5 260 M (677:) s
+321.5 260 M
+(      binNumber = i;) s
+291.5 249 M (678:) s
+321.5 249 M
+(    }) s
+291.5 238 M (679:) s
+321.5 238 M
+(  }) s
+291.5 227 M (680:) s
+321.5 227 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 227 M
+(// Return frequency in Hz based on) s
+/F-gs-font 10 10 SF
+291.5 216 M (681:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 216 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 216 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 216 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+381.5 216 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+417.5 216 M
+(\)binNumber * FFT_BIN) s
+291.5 205 M (682:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 205 M
+(}) s
+291.5 194 M (683:) s
+291.5 183 M (684:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 183 M
+(// Function to transmit the Underwat) s
+/F-gs-font 10 10 SF
+291.5 172 M (685:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 172 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 172 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 172 M
+(transmitMessageAsync) s
+/F-gs-font 10 10 SF
+0 setgray
+471.5 172 M
+(\(Underwater) s
+291.5 161 M (686:) s
+321.5 161 M
+(  transitionOperatingMode\(TRANSMIT\);) s
+291.5 150 M (687:) s
+321.5 150 M
+(  addToneQueue\(MESSAGE_START_FREQ, M) s
+291.5 139 M (688:) s
+321.5 139 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 139 M
+(// Iterate over each bit of the me) s
+/F-gs-font 10 10 SF
+291.5 128 M (689:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 128 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 128 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 128 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+363.5 128 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 128 M
+( i = 0; i < MESSAGE_LENGTH) s
+291.5 117 M (690:) s
+321.5 117 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 117 M
+(// Extract the i-th bit from the) s
+/F-gs-font 10 10 SF
+291.5 106 M (691:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 106 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+345.5 106 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+357.5 106 M
+( \(message.data & \(1 << i\)\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+531.5 106 M
+(/) s
+/F-gs-font 10 10 SF
+291.5 95 M (692:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 95 M
+(      addToneQueue\(MESSAGE_1_FREQ, M) s
+291.5 84 M (693:) s
+321.5 84 M
+(    } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+357.5 84 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 84 M
+( { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+399.5 84 M
+(// If the i-th bit is 0) s
+/F-gs-font 10 10 SF
+291.5 73 M (694:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 73 M
+(      addToneQueue\(MESSAGE_0_FREQ, M) s
+291.5 62 M (695:) s
+321.5 62 M
+(    }) s
+291.5 51 M (696:) s
+321.5 51 M
+(  }) s
+291.5 40 M (697:) s
+321.5 40 M
+(  addToneQueue\(MESSAGE_0_FREQ, \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+513.5 40 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+531.5 40 M
+(\)) s
+291.5 29 M (698:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 29 M
+(}) s
+291.5 18 M (699:) s
+291.5 7 M (700:) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 7 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 7 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 7 M
+(addToneQueue) s
+/F-gs-font 10 10 SF
+0 setgray
+423.5 7 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+429.5 7 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+447.5 7 M
+( freq, ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+489.5 7 M
+(unsigned) s
+/F-gs-font 10 10 SF
+0 setgray
+537.5 7 M
+() s
+_R
+S
+%%Page: (6) 6
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 6 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (6) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+18 766 M (701:) s
+48 766 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 766 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 766 M
+( \(toneStackPos < toneBufferLengt) s
+18 755 M (702:) s
+48 755 M
+(    toneFreqQueue[toneStackPos] = fr) s
+18 744 M (703:) s
+48 744 M
+(    toneDelayQueue[toneStackPos] = d) s
+18 733 M (704:) s
+48 733 M
+(    toneStackPos++; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+168 733 M
+(//always increas) s
+/F-gs-font 10 10 SF
+18 722 M (705:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 722 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 722 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 722 M
+( \(toneStackPos == 1\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+222 722 M
+(//If it) s
+/F-gs-font 10 10 SF
+18 711 M (706:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 711 M
+(      tone\(HYDROPHONE_PIN, toneFreqQ) s
+18 700 M (707:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 700 M
+(      lastToneStart = millis\(\);) s
+18 689 M (708:) s
+48 689 M
+(    }) s
+18 678 M (709:) s
+48 678 M
+(  }) s
+18 667 M (710:) s
+48 667 M
+(}) s
+18 656 M (711:) s
+18 645 M (712:) s
+48 645 M
+(bool ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 645 M
+(validAmplitude) s
+/F-gs-font 10 10 SF
+0 setgray
+162 645 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+168 645 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+204 645 M
+( amp\) {) s
+18 634 M (713:) s
+48 634 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 634 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+96 634 M
+( \(amp >= MIN_VALID_AMP && am) s
+18 623 M (714:) s
+48 623 M
+(}) s
+18 612 M (715:) s
+18 601 M (716:) s
+48 601 M
+(bool ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 601 M
+(validUnderwaterMessage) s
+/F-gs-font 10 10 SF
+0 setgray
+210 601 M
+(\(Underwat) s
+18 590 M (717:) s
+48 590 M
+(  uint8_t msg = message.msg;) s
+18 579 M (718:) s
+48 579 M
+(  uint8_t id = message.id;) s
+18 568 M (719:) s
+18 557 M (720:) s
+48 557 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 557 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+96 557 M
+( \(msg >= 0 && msg < 6 && id ) s
+18 546 M (721:) s
+48 546 M
+(}) s
+18 535 M (722:) s
+18 524 M (723:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 524 M
+(// Example usage: freqMatchesBounds\() s
+/F-gs-font 10 10 SF
+18 513 M (724:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 513 M
+(// Example usage: freqMatchesBounds\() s
+/F-gs-font 10 10 SF
+18 502 M (725:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 502 M
+(bool ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 502 M
+(freqMatchesBounds) s
+/F-gs-font 10 10 SF
+0 setgray
+180 502 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+186 502 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+222 502 M
+( freq, ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+264 502 M
+() s
+/F-gs-font 10 10 SF
+18 491 M (726:) s
+/Courier-Bold 10 10 SUF
+48 491 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 491 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+96 491 M
+( abs\(freq-\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+162 491 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+198 491 M
+(\)target\) <=) s
+18 480 M (727:) s
+48 480 M
+(}) s
+18 469 M (728:) s
+18 458 M (729:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 458 M
+(// Transition state function) s
+/F-gs-font 10 10 SF
+18 447 M (730:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 447 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 447 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 447 M
+(transitionReceivingState) s
+/F-gs-font 10 10 SF
+0 setgray
+222 447 M
+(\(RECEIV) s
+18 436 M (731:) s
+48 436 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+60 436 M
+(// Serial.print\("transitionReceivi) s
+/F-gs-font 10 10 SF
+18 425 M (732:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 425 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+60 425 M
+(// Serial.println\(newState\);) s
+/F-gs-font 10 10 SF
+18 414 M (733:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 414 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 414 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+72 414 M
+( \(newState == CHECK_START || new) s
+18 403 M (734:) s
+48 403 M
+(    clearSampleBuffer\(\);) s
+18 392 M (735:) s
+48 392 M
+(    sampling = 1; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+156 392 M
+(// Begin sampling) s
+/F-gs-font 10 10 SF
+18 381 M (736:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 381 M
+(    lastBitChange = millis\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+228 381 M
+(// Sta) s
+/F-gs-font 10 10 SF
+18 370 M (737:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 370 M
+(  } ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 370 M
+(else) s
+/F-gs-font 10 10 SF
+0 setgray
+96 370 M
+( { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+114 370 M
+(//Back to LISTENING) s
+/F-gs-font 10 10 SF
+18 359 M (738:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 359 M
+(    clearSampleBuffer\(\);) s
+18 348 M (739:) s
+48 348 M
+(    clearBitBuffer\(\);) s
+18 337 M (740:) s
+48 337 M
+(    sampling = 0; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+156 337 M
+(// NOT sampling) s
+/F-gs-font 10 10 SF
+18 326 M (741:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 326 M
+(  }) s
+18 315 M (742:) s
+48 315 M
+(  curReceivingState = newState; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+240 315 M
+(// S) s
+/F-gs-font 10 10 SF
+18 304 M (743:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 304 M
+(}) s
+18 293 M (744:) s
+18 282 M (745:) s
+48 282 M
+(UnderwaterMessage ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+156 282 M
+(createUnderwaterMe) s
+/F-gs-font 10 10 SF
+18 271 M (746:) s
+/Courier-Bold 10 10 SUF
+48 271 M
+(    UnderwaterMessage message;) s
+/F-gs-font 10 10 SF
+18 260 M (747:) s
+/Courier-Bold 10 10 SUF
+48 260 M
+(    message.msg = m & 0x7;  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+216 260 M
+(// Mask ) s
+/F-gs-font 10 10 SF
+18 249 M (748:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 249 M
+(    message.id = i & 0xF;   ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+216 249 M
+(// Mask ) s
+/F-gs-font 10 10 SF
+18 238 M (749:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 238 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 238 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+108 238 M
+( message;) s
+18 227 M (750:) s
+48 227 M
+(}) s
+18 216 M (751:) s
+18 205 M (752:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+48 205 M
+(// Rainbow-enhanced theater marquee.) s
+/F-gs-font 10 10 SF
+18 194 M (753:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+48 194 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+72 194 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+78 194 M
+(theaterChaseRainbow) s
+/F-gs-font 10 10 SF
+0 setgray
+192 194 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+198 194 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+216 194 M
+( wait\) {) s
+18 183 M (754:) s
+48 183 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 183 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+78 183 M
+( firstPixelHue = 0;     ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+222 183 M
+(// Firs) s
+/F-gs-font 10 10 SF
+18 172 M (755:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 172 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 172 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+78 172 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+84 172 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+102 172 M
+( a=0; a<30; a++\) {  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+222 172 M
+(// Repe) s
+/F-gs-font 10 10 SF
+18 161 M (756:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 161 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 161 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+90 161 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+96 161 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+114 161 M
+( b=0; b<3; b++\) { ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+222 161 M
+(//  'b') s
+/F-gs-font 10 10 SF
+18 150 M (757:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 150 M
+(      strip.clear\(\);         ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+222 150 M
+(//   Se) s
+/F-gs-font 10 10 SF
+18 139 M (758:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 139 M
+(      ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+84 139 M
+(// 'c' counts up from 'b' to e) s
+/F-gs-font 10 10 SF
+18 128 M (759:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 128 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 128 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+102 128 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+108 128 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+126 128 M
+( c=b; c<strip.numPixels) s
+18 117 M (760:) s
+48 117 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 117 M
+(// hue of pixel 'c' is offse) s
+/F-gs-font 10 10 SF
+18 106 M (761:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 106 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 106 M
+(// revolution of the color w) s
+/F-gs-font 10 10 SF
+18 95 M (762:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 95 M
+(        ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+96 95 M
+(// of the strip \(strip.numPi) s
+/F-gs-font 10 10 SF
+18 84 M (763:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 84 M
+(        ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+96 84 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+114 84 M
+(      hue   = firstPixelH) s
+18 73 M (764:) s
+48 73 M
+(        uint32_t color = strip.gamma) s
+18 62 M (765:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 62 M
+(        strip.setPixelColor\(c, color) s
+18 51 M (766:) s
+/F-gs-font 10 10 SF
+0 setgray
+48 51 M
+(      }) s
+18 40 M (767:) s
+48 40 M
+(      strip.show\(\);                ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+258 40 M
+(/) s
+/F-gs-font 10 10 SF
+18 29 M (768:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 29 M
+(      delay\(wait\);                 ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+258 29 M
+(/) s
+/F-gs-font 10 10 SF
+18 18 M (769:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 18 M
+(      firstPixelHue += 65536 / 90; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+258 18 M
+(/) s
+/F-gs-font 10 10 SF
+18 7 M (770:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+48 7 M
+(    }) s
+291.5 766 M (771:) s
+321.5 766 M
+(  }) s
+291.5 755 M (772:) s
+321.5 755 M
+(}) s
+291.5 744 M (773:) s
+291.5 733 M (774:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 733 M
+(// Rainbow cycle along whole strip. ) s
+/F-gs-font 10 10 SF
+291.5 722 M (775:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 722 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 722 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 722 M
+(rainbow) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 722 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+399.5 722 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+417.5 722 M
+( wait\) {) s
+291.5 711 M (776:) s
+321.5 711 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 711 M
+(// Hue of first pixel runs 5 compl) s
+/F-gs-font 10 10 SF
+291.5 700 M (777:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 700 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 700 M
+(// Color wheel has a range of 6553) s
+/F-gs-font 10 10 SF
+291.5 689 M (778:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 689 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 689 M
+(// just count from 0 to 5*65536. A) s
+/F-gs-font 10 10 SF
+291.5 678 M (779:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 678 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 678 M
+(// means we'll make 5*65536/256 = ) s
+/F-gs-font 10 10 SF
+291.5 667 M (780:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 667 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+333.5 667 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 667 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+357.5 667 M
+(long) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 667 M
+( firstPixelHue = 0; firstP) s
+291.5 656 M (781:) s
+321.5 656 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 656 M
+(// strip.rainbow\(\) can take a si) s
+/F-gs-font 10 10 SF
+291.5 645 M (782:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 645 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 645 M
+(// optionally a few extras: numb) s
+/F-gs-font 10 10 SF
+291.5 634 M (783:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 634 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 634 M
+(// saturation and value \(brightn) s
+/F-gs-font 10 10 SF
+291.5 623 M (784:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 623 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 623 M
+(// ColorHSV\(\) function, default ) s
+/F-gs-font 10 10 SF
+291.5 612 M (785:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 612 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 612 M
+(// to apply gamma correction to ) s
+/F-gs-font 10 10 SF
+291.5 601 M (786:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 601 M
+(    strip.rainbow\(firstPixelHue\);) s
+291.5 590 M (787:) s
+321.5 590 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 590 M
+(// Above line is equivalent to:) s
+/F-gs-font 10 10 SF
+291.5 579 M (788:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 579 M
+(    ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+345.5 579 M
+(// strip.rainbow\(firstPixelHue, ) s
+/F-gs-font 10 10 SF
+291.5 568 M (789:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 568 M
+(    strip.show\(\); ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+429.5 568 M
+(// Update strip wi) s
+/F-gs-font 10 10 SF
+291.5 557 M (790:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 557 M
+(    delay\(wait\);  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+429.5 557 M
+(// Pause for a mom) s
+/F-gs-font 10 10 SF
+291.5 546 M (791:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 546 M
+(  }) s
+291.5 535 M (792:) s
+321.5 535 M
+(}) s
+291.5 524 M (793:) s
+291.5 513 M (794:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 513 M
+(/**************** Support SGTL sampl) s
+/F-gs-font 10 10 SF
+291.5 502 M (795:) s
+/Courier-Oblique 10 10 SUF
+321.5 502 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 502 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+339.5 502 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+345.5 502 M
+(defined) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 502 M
+(\() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+393.5 502 M
+(__IMXRT1062__) s
+/F-gs-font 10 10 SF
+0 setgray
+471.5 502 M
+(\)  // ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+507.5 502 M
+(Teens) s
+/F-gs-font 10 10 SF
+291.5 491 M (796:) s
+/Courier 10 10 SUF
+/F-gs-font 10 10 SF
+291.5 480 M (797:) s
+/Courier 10 10 SUF
+321.5 480 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 480 M
+(include) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 480 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.737255 0.560784 0.560784 setrgbcolor
+375.5 480 M
+(<utility/imxrt_hw.h>) s
+/F-gs-font 10 10 SF
+0 setgray
+291.5 469 M (798:) s
+291.5 458 M (799:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 458 M
+(// taken from: https://forum.pjrc.co) s
+/F-gs-font 10 10 SF
+291.5 447 M (800:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 447 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 447 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 447 M
+(setAudioSampleI2SFreq) s
+/F-gs-font 10 10 SF
+0 setgray
+477.5 447 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+483.5 447 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+501.5 447 M
+( freq\)) s
+291.5 436 M (801:) s
+321.5 436 M
+(  ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+333.5 436 M
+(// PLL between 27*24 = 648MHz und ) s
+/F-gs-font 10 10 SF
+291.5 425 M (802:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 425 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 425 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 425 M
+( n1 = 4; ) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+405.5 425 M
+(//SAI prescaler 4 => \() s
+/F-gs-font 10 10 SF
+291.5 414 M (803:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 414 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 414 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 414 M
+( n2 = 1 + \(24000000 * 27\) / \(fr) s
+291.5 403 M (804:) s
+321.5 403 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 403 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+369.5 403 M
+( C = \(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+411.5 403 M
+(double) s
+/F-gs-font 10 10 SF
+0 setgray
+447.5 403 M
+(\)freq * 256 * n) s
+291.5 392 M (805:) s
+321.5 392 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 392 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 392 M
+( c0 = C;) s
+291.5 381 M (806:) s
+321.5 381 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 381 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 381 M
+( c2 = 10000;) s
+291.5 370 M (807:) s
+321.5 370 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 370 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 370 M
+( c1 = C * c2 - \(c0 * c2\);) s
+291.5 359 M (808:) s
+321.5 359 M
+(  set_audioClock\(c0, c1, c2, true\);) s
+291.5 348 M (809:) s
+321.5 348 M
+(  CCM_CS1CDR = \(CCM_CS1CDR & ~\(CCM_C) s
+291.5 337 M (810:) s
+321.5 337 M
+(       | CCM_CS1CDR_SAI1_CLK_PRED\(n1) s
+291.5 326 M (811:) s
+/F-gs-font 10 10 SF
+0 setgray
+321.5 326 M
+(       | CCM_CS1CDR_SAI1_CLK_PODF\(n2) s
+291.5 315 M (812:) s
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 315 M
+(//Serial.printf\("setAudioSampleI2SFr) s
+/F-gs-font 10 10 SF
+291.5 304 M (813:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+321.5 304 M
+(}) s
+291.5 293 M (814:) s
+291.5 282 M (815:) s
+321.5 282 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 282 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 282 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+357.5 282 M
+(defined) s
+/F-gs-font 10 10 SF
+0 setgray
+399.5 282 M
+(\() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+405.5 282 M
+(KINETISK) s
+/F-gs-font 10 10 SF
+0 setgray
+453.5 282 M
+(\)  // ) s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+489.5 282 M
+(Teensy) s
+/F-gs-font 10 10 SF
+0 setgray
+525.5 282 M
+( 3) s
+291.5 271 M (816:) s
+291.5 260 M (817:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 260 M
+(// samplerate code by Frank Boesing) s
+/F-gs-font 10 10 SF
+291.5 249 M (818:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 249 M
+(// https://forum.pjrc.com/threads/38) s
+/F-gs-font 10 10 SF
+291.5 238 M (819:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+321.5 238 M
+(void) s
+/F-gs-font 10 10 SF
+0 setgray
+345.5 238 M
+( ) s
+/Courier-Bold 10 10 SUF
+0 0 1 setrgbcolor
+351.5 238 M
+(setAudioSampleI2SFreq) s
+/F-gs-font 10 10 SF
+0 setgray
+477.5 238 M
+(\() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+483.5 238 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+501.5 238 M
+( freq\)) s
+291.5 227 M (820:) s
+321.5 227 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 227 M
+(typedef) s
+/F-gs-font 10 10 SF
+0 setgray
+375.5 227 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+381.5 227 M
+(struct) s
+/F-gs-font 10 10 SF
+0 setgray
+417.5 227 M
+( {) s
+291.5 216 M (821:) s
+321.5 216 M
+(    uint8_t mult;) s
+291.5 205 M (822:) s
+321.5 205 M
+(    uint16_t div;) s
+291.5 194 M (823:) s
+321.5 194 M
+(  } __attribute__\(\(__packed__\)\) tmcl) s
+291.5 183 M (824:) s
+321.5 183 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 183 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 183 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+369.5 183 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 183 M
+( numfreqs = 14;) s
+291.5 172 M (825:) s
+321.5 172 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 172 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 172 M
+( ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+369.5 172 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+387.5 172 M
+( samplefreqs[numfreqs] = ) s
+291.5 161 M (826:) s
+291.5 150 M (827:) s
+/Courier-Oblique 10 10 SUF
+0.698039 0.133333 0.133333 setrgbcolor
+321.5 150 M
+(// F_PLL = phase lock loop output fr) s
+/F-gs-font 10 10 SF
+291.5 139 M (828:) s
+/Courier-Oblique 10 10 SUF
+/F-gs-font 10 10 SF
+0 setgray
+291.5 128 M (829:) s
+321.5 128 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 128 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+339.5 128 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+351.5 128 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+381.5 128 M
+(==16000000\)) s
+291.5 117 M (830:) s
+321.5 117 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 117 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 117 M
+( tmclk clkArr[numfreqs] = {{1) s
+291.5 106 M (831:) s
+321.5 106 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 106 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 106 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+363.5 106 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 106 M
+(==72000000\)) s
+291.5 95 M (832:) s
+321.5 95 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 95 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 95 M
+( tmclk clkArr[numfreqs] = {{3) s
+291.5 84 M (833:) s
+321.5 84 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 84 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 84 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+363.5 84 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 84 M
+(==96000000\)) s
+291.5 73 M (834:) s
+321.5 73 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 73 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 73 M
+( tmclk clkArr[numfreqs] = {{8) s
+291.5 62 M (835:) s
+321.5 62 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 62 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 62 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+363.5 62 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 62 M
+(==120000000\)) s
+291.5 51 M (836:) s
+321.5 51 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 51 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 51 M
+( tmclk clkArr[numfreqs] = {{3) s
+291.5 40 M (837:) s
+321.5 40 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 40 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 40 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+363.5 40 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 40 M
+(==144000000\)) s
+291.5 29 M (838:) s
+321.5 29 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 29 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 29 M
+( tmclk clkArr[numfreqs] = {{1) s
+291.5 18 M (839:) s
+321.5 18 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+327.5 18 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+351.5 18 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+363.5 18 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+393.5 18 M
+(==180000000\)) s
+291.5 7 M (840:) s
+321.5 7 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+333.5 7 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+363.5 7 M
+( tmclk clkArr[numfreqs] = {{4) s
+_R
+S
+%%Page: (7) 7
+%%BeginPageSetup
+_S
+24 24 translate
+/pagenum 7 def
+/fname (coral_connect.ino) def
+/fdir (.) def
+/ftail (coral_connect.ino) def
+% User defined strings:
+/fmodstr (Sun Dec 08 18:42:32 2024) def
+/pagenumstr (7) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+18 766 M (841:) s
+48 766 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 766 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+78 766 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+90 766 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+120 766 M
+(==192000000\)) s
+18 755 M (842:) s
+48 755 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 755 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+90 755 M
+( tmclk clkArr[numfreqs] = {{4) s
+18 744 M (843:) s
+48 744 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 744 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+78 744 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+90 744 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+120 744 M
+(==216000000\)) s
+18 733 M (844:) s
+48 733 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 733 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+90 733 M
+( tmclk clkArr[numfreqs] = {{3) s
+18 722 M (845:) s
+48 722 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 722 M
+(elif) s
+/F-gs-font 10 10 SF
+0 setgray
+78 722 M
+( \() s
+/Courier 10 10 SUF
+0.721569 0.52549 0.043137 setrgbcolor
+90 722 M
+(F_PLL) s
+/F-gs-font 10 10 SF
+0 setgray
+120 722 M
+(==240000000\)) s
+18 711 M (846:) s
+48 711 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+60 711 M
+(const) s
+/F-gs-font 10 10 SF
+0 setgray
+90 711 M
+( tmclk clkArr[numfreqs] = {{1) s
+18 700 M (847:) s
+48 700 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 700 M
+(endif) s
+/F-gs-font 10 10 SF
+0 setgray
+18 689 M (848:) s
+18 678 M (849:) s
+48 678 M
+(  ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+60 678 M
+(for) s
+/F-gs-font 10 10 SF
+0 setgray
+78 678 M
+( \() s
+/Courier-Bold 10 10 SUF
+0.133333 0.545098 0.133333 setrgbcolor
+90 678 M
+(int) s
+/F-gs-font 10 10 SF
+0 setgray
+108 678 M
+( f = 0; f < numfreqs; f++\)) s
+18 667 M (850:) s
+48 667 M
+(    ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+72 667 M
+(if) s
+/F-gs-font 10 10 SF
+0 setgray
+84 667 M
+( \( freq == samplefreqs[f] \) {) s
+18 656 M (851:) s
+48 656 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 656 M
+(while) s
+/F-gs-font 10 10 SF
+0 setgray
+114 656 M
+( \(I2S0_MCR & I2S_MCR_DUF\)) s
+18 645 M (852:) s
+48 645 M
+(      I2S0_MDR = I2S_MDR_FRACT\(\(clkA) s
+18 634 M (853:) s
+48 634 M
+(      ) s
+/Courier-Bold 10 10 SUF
+0.627451 0.12549 0.941176 setrgbcolor
+84 634 M
+(return) s
+/F-gs-font 10 10 SF
+0 setgray
+120 634 M
+(;) s
+18 623 M (854:) s
+48 623 M
+(    }) s
+18 612 M (855:) s
+48 612 M
+(  }) s
+18 601 M (856:) s
+48 601 M
+(}) s
+18 590 M (857:) s
+18 579 M (858:) s
+48 579 M
+(#) s
+/Courier-Bold 10 10 SUF
+0.372549 0.619608 0.627451 setrgbcolor
+54 579 M
+(endif) s
+/F-gs-font 10 10 SF
+0 setgray
+_R
+S
+%%Trailer
+%%Pages: 7
+%%DocumentNeededResources: font Courier-Oblique Courier-Bold Courier 
+%%EOF
